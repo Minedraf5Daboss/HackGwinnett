@@ -69,21 +69,28 @@ such as `"asl-interpreter"`.
 **🔒 `GET /passport`** returns the user's passport. Before the first save it's empty, with
 `updated_at: null`.
 
-**🔒 `PUT /passport`** saves it, replacing what was there:
+**🔒 `PUT /passport`** saves it, replacing what was there. Each accommodation is a
+**must-have** or **nice-to-have**. A plain id is a must-have. For a nice-to-have, send
+`{"id": ..., "must_have": false}` instead:
 
 ```json
-{ "accommodations": ["asl-interpreter", "low-sensory"], "notes": "Please text me." }
+{
+  "accommodations": ["asl-interpreter", { "id": "low-sensory", "must_have": false }],
+  "notes": "Please text me."
+}
 ```
 
-Both endpoints return:
+Both endpoints return the accommodations in display order, each with `must_have`:
 
 ```json
 {
   "accommodations": [
     { "id": "asl-interpreter", "label": "ASL interpreter", "category": "Communication",
-      "description": "American Sign Language interpreter, in person or by video." },
+      "description": "American Sign Language interpreter, in person or by video.",
+      "must_have": true },
     { "id": "low-sensory", "label": "Low-sensory environment", "category": "Sensory",
-      "description": "Quiet room, dimmable lights, and little background noise." }
+      "description": "Quiet room, dimmable lights, and little background noise.",
+      "must_have": false }
   ],
   "notes": "Please text me.",
   "updated_at": "2026-10-31T16:28:15",
@@ -108,7 +115,9 @@ A read-only view of the passport that anyone with the link can open, for showing
 ```json
 {
   "name": "Ada Patient",
-  "accommodations": [ { "id": "asl-interpreter", "label": "ASL interpreter", ... } ],
+  "accommodations": [
+    { "id": "asl-interpreter", "label": "ASL interpreter", ..., "must_have": true }
+  ],
   "notes": "Please text me.",
   "updated_at": "2026-10-31T16:28:15"
 }
@@ -127,11 +136,14 @@ includes `share_token`, so you can show whether sharing is on.
 | `q` | `dental` | Searches names, types, cities, ZIP codes, and badge names |
 | `type` | `Dental` | One clinic type (the list is at `GET /clinics/types`) |
 | `accommodations` | `wheelchair-access,asl-interpreter` | **Filters:** only clinics offering all of them |
-| `needs` | `asl-interpreter,low-sensory` | **Ranks:** best matches first, adds `match`; nothing is filtered out |
+| `needs` | `asl-interpreter,low-sensory` | **Ranks** by these must-haves: best matches first, adds `match`; nothing is filtered out |
+| `nice_to_have` | `extended-appointments` | **Ranks** too, but missing one matters less than missing a must-have |
 | `lat`, `lng` | `33.96`, `-83.99` | Sorts by distance and fills in `distance_miles` (pass both) |
 
-Results are sorted by name, by distance with `lat`/`lng`, and by best match with `needs`
-(ties broken by distance or name). Each clinic:
+Results are sorted by name, or by distance with `lat`/`lng`. With `needs` or `nice_to_have`,
+the clinics missing the fewest must-haves come first, then those with the highest `score`,
+with ties broken by distance or name. A clinic that has every must-have ranks above one that
+misses a must-have, even if the second clinic offers more nice-to-haves. Each clinic:
 
 ```json
 {
@@ -151,18 +163,26 @@ Results are sorted by name, by distance with `lat`/`lng`, and by best match with
     ...
   ],
   "distance_miles": 7.7,
-  "match": { "met": ["asl-interpreter"], "missing": ["low-sensory"], "score": 0.5 }
+  "match": {
+    "met": ["asl-interpreter"],
+    "missing": ["low-sensory"],
+    "missing_must_haves": ["low-sensory"],
+    "score": 0.5
+  }
 }
 ```
 
 - `accommodations` are the clinic's **badges**: show `label`, and `note` when it's not null.
 - `latitude`/`longitude` are ready for a map (e.g. Leaflet markers).
-- `distance_miles` is `null` without `lat`/`lng`, and `match` is `null` without `needs`.
-  `score` runs from 0 to 1, so 0.5 means "meets 1 of your 2 needs".
+- `distance_miles` is `null` without `lat`/`lng`, and `match` is `null` without `needs` or
+  `nice_to_have`. `score` runs from 0 to 1 and counts both kinds, so 0.5 means "meets 1 of
+  your 2 needs". `missing_must_haves` is empty when the clinic has every must-have, which is
+  a good cue for a "Meets all your must-haves" label.
 
-**🔒 `GET /passport/matches`** is the same search, ranked by the user's saved passport, with
-no need to pass `needs`. It takes the same parameters as `GET /clinics`. With an empty
-passport, nothing is ranked and `match` is `null`.
+**🔒 `GET /passport/matches`** is the same search, ranked by the user's saved passport (its
+must-haves and nice-to-haves), with no need to pass `needs` or `nice_to_have`. It takes the
+other `GET /clinics` parameters. With an empty passport, nothing is ranked and `match` is
+`null`.
 
 **`GET /clinics/{id}`** returns one clinic (`404` if unknown), and **`GET /clinics/types`**
 returns the clinic types, e.g. `["Audiology", "Behavioral health", "Dental", ...]`.

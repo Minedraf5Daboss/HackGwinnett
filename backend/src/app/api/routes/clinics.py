@@ -54,11 +54,16 @@ def _to_read(
     )
 
 
-def _match(clinic: Clinic, needs: list[str]) -> ClinicMatch:
+def _match(clinic: Clinic, needs: dict[str, bool]) -> ClinicMatch:
     offered = {ca.accommodation_id for ca in clinic.accommodations}
     met = [need for need in needs if need in offered]
     missing = [need for need in needs if need not in offered]
-    return ClinicMatch(met=met, missing=missing, score=round(len(met) / len(needs), 2))
+    return ClinicMatch(
+        met=met,
+        missing=missing,
+        missing_must_haves=[need for need in missing if needs[need]],
+        score=round(len(met) / len(needs), 2),
+    )
 
 
 def parse_accommodation_ids(db: Session, raw: str | None) -> list[str]:
@@ -103,11 +108,13 @@ def clinic_filters(
 ClinicFiltersDep = Annotated[ClinicFilters, Depends(clinic_filters)]
 
 
-def search_clinics(db: Session, filters: ClinicFilters, needs: list[str]) -> list[ClinicRead]:
+def search_clinics(db: Session, filters: ClinicFilters, needs: dict[str, bool]) -> list[ClinicRead]:
     """Find clinics matching `filters`.
 
-    Sorted by name, or by distance if `lat`/`lng` are set. With `needs`, clinics meeting more
-    of them come first (then by distance or name), and each result gets a `match`.
+    Sorted by name, or by distance if `lat`/`lng` are set. `needs` maps accommodation ids to
+    whether each is a must-have. With `needs`, each result gets a `match`, and clinics missing
+    the fewest must-haves come first, then those meeting the most needs overall, then by
+    distance or name.
     """
     stmt = select(Clinic)
     q = (filters.q or "").strip()
@@ -143,7 +150,7 @@ def search_clinics(db: Session, filters: ClinicFilters, needs: list[str]) -> lis
     if filters.lat is not None:
         results.sort(key=lambda clinic: clinic.distance_miles)
     if needs:
-        results.sort(key=lambda clinic: clinic.match.score, reverse=True)
+        results.sort(key=lambda c: (len(c.match.missing_must_haves), -c.match.score))
     return results
 
 
@@ -154,15 +161,25 @@ def list_clinics(
     needs: str | None = Query(
         None,
         description=(
-            "Comma-separated accommodation ids to rank by: clinics meeting more of them come "
-            "first, and each result gets a `match`. Unlike `accommodations`, nothing is "
-            "filtered out."
+            "Comma-separated must-have accommodation ids to rank by: clinics missing fewer of "
+            "them come first, and each result gets a `match`. Unlike `accommodations`, nothing "
+            "is filtered out."
         ),
-        examples=["wheelchair-access,asl-interpreter,low-sensory"],
+        examples=["wheelchair-access,asl-interpreter"],
+    ),
+    nice_to_have: str | None = Query(
+        None,
+        description=(
+            "Comma-separated accommodation ids that are nice to have. They count toward a "
+            "clinic's `score`, but missing one matters less than missing a must-have."
+        ),
+        examples=["low-sensory,extended-appointments"],
     ),
 ) -> list[ClinicRead]:
     """Search the directory."""
-    return search_clinics(db, filters, parse_accommodation_ids(db, needs))
+    must_haves = parse_accommodation_ids(db, needs)
+    nice = [i for i in parse_accommodation_ids(db, nice_to_have) if i not in must_haves]
+    return search_clinics(db, filters, dict.fromkeys(must_haves, True) | dict.fromkeys(nice, False))
 
 
 @router.get("/types")

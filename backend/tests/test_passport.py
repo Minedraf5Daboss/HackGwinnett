@@ -20,6 +20,7 @@ def test_save_and_replace_passport(client, auth_headers):
     # Returned in display order, with labels for showing on screen.
     assert [a["id"] for a in saved["accommodations"]] == ["asl-interpreter", "low-sensory"]
     assert saved["accommodations"][0]["label"] == "ASL interpreter"
+    assert all(a["must_have"] for a in saved["accommodations"])  # plain ids are must-haves
     assert saved["notes"] == "Please text me."
     assert saved["updated_at"] is not None
     assert client.get("/api/v1/passport", headers=auth_headers).json() == saved
@@ -29,6 +30,32 @@ def test_save_and_replace_passport(client, auth_headers):
     resp = client.put("/api/v1/passport", json=body, headers=auth_headers)
     assert [a["id"] for a in resp.json()["accommodations"]] == ["wheelchair-access"]
     assert resp.json()["notes"] is None
+
+
+def test_save_nice_to_haves(client, auth_headers):
+    body = {
+        "accommodations": [
+            {"id": "hearing-loop", "must_have": False},
+            "asl-interpreter",
+            {"id": "low-sensory", "must_have": False},
+            {"id": "low-sensory"},  # listed twice: must-have wins
+        ]
+    }
+    resp = client.put("/api/v1/passport", json=body, headers=auth_headers)
+    assert resp.status_code == 200
+    assert [(a["id"], a["must_have"]) for a in resp.json()["accommodations"]] == [
+        ("asl-interpreter", True),
+        ("low-sensory", True),
+        ("hearing-loop", False),
+    ]
+
+    # Saving again can change an accommodation from must-have to nice-to-have.
+    body = {"accommodations": [{"id": "asl-interpreter", "must_have": False}]}
+    client.put("/api/v1/passport", json=body, headers=auth_headers)
+    saved = client.get("/api/v1/passport", headers=auth_headers).json()
+    assert [(a["id"], a["must_have"]) for a in saved["accommodations"]] == [
+        ("asl-interpreter", False)
+    ]
 
 
 def test_passport_rejects_unknown_accommodation(client, auth_headers):
@@ -68,11 +95,45 @@ def test_matches_rank_clinics_by_passport(client, auth_headers):
     assert clinics[0]["match"] == {
         "met": ["roll-in-exam-table", "asl-interpreter", "low-sensory"],  # display order
         "missing": [],
+        "missing_must_haves": [],
         "score": 1.0,
     }
     maple = next(c for c in clinics if c["id"] == "maple-creek-family-medicine")
     assert maple["match"]["missing"] == ["low-sensory"]
     assert maple["match"]["score"] == 0.67
+
+
+def test_matches_put_must_haves_first(client, auth_headers):
+    nice = {"must_have": False}
+    save(
+        client,
+        auth_headers,
+        [
+            "asl-interpreter",
+            {"id": "low-sensory", **nice},
+            {"id": "extended-appointments", **nice},
+            {"id": "support-person", **nice},
+        ],
+    )
+    clinics = client.get("/api/v1/passport/matches", headers=auth_headers).json()
+
+    # Sunrise has everything. Then come the other clinics with the interpreter, ahead of
+    # Calm Waters and Riverbend, which offer more of the nice-to-haves but not the interpreter.
+    assert [c["id"] for c in clinics[:6]] == [
+        "sunrise-community-clinic",
+        "bluebird-hearing-speech",
+        "harbor-urgent-care",
+        "maple-creek-family-medicine",
+        "calm-waters-behavioral-health",
+        "riverbend-pediatrics",
+    ]
+    assert clinics[1]["match"]["score"] == 0.5
+    assert clinics[4]["match"] == {
+        "met": ["low-sensory", "extended-appointments", "support-person"],
+        "missing": ["asl-interpreter"],
+        "missing_must_haves": ["asl-interpreter"],
+        "score": 0.75,
+    }
 
 
 def test_matches_take_clinic_filters(client, auth_headers):
@@ -107,6 +168,7 @@ def test_share_link(client, auth_headers):
     shared = client.get(f"/api/v1/shared-passports/{token}").json()
     assert shared["name"] == "Ada Patient"
     assert [a["id"] for a in shared["accommodations"]] == ["asl-interpreter"]
+    assert shared["accommodations"][0]["must_have"] is True  # so staff can see what's essential
     assert shared["notes"] == "Please text me."
 
     # Sharing again keeps the same link; the name can be hidden.

@@ -7,10 +7,12 @@ from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.api.routes.clinics import ClinicFiltersDep, search_clinics
-from app.models import Accommodation, Passport
+from app.models import Accommodation, Passport, PassportAccommodation
 from app.schemas import (
     AccommodationRead,
     ClinicRead,
+    PassportAccommodationRead,
+    PassportAccommodationUpdate,
     PassportRead,
     PassportShareCreate,
     PassportShareRead,
@@ -22,48 +24,72 @@ router = APIRouter(prefix="/passport", tags=["passport"])
 shared_router = APIRouter(prefix="/shared-passports", tags=["passport"])
 
 
+def _accommodations(passport: Passport) -> list[PassportAccommodationRead]:
+    """The passport's accommodations, in display order."""
+    chosen = sorted(passport.accommodations, key=lambda pa: pa.accommodation.sort_order)
+    return [
+        PassportAccommodationRead(
+            **AccommodationRead.model_validate(pa.accommodation).model_dump(),
+            must_have=pa.must_have,
+        )
+        for pa in chosen
+    ]
+
+
 @router.get("")
 def read_passport(user: CurrentUser) -> PassportRead:
     """Your passport. Empty (with `updated_at` null) until you first save it."""
-    if user.passport is None:
+    passport = user.passport
+    if passport is None:
         return PassportRead(accommodations=[], notes=None, updated_at=None)
-    return PassportRead.model_validate(user.passport)
+    return PassportRead(
+        accommodations=_accommodations(passport),
+        notes=passport.notes,
+        updated_at=passport.updated_at,
+        share_token=passport.share_token,
+    )
 
 
 @router.put("")
 def save_passport(payload: PassportUpdate, db: SessionDep, user: CurrentUser) -> PassportRead:
     """Save your passport, replacing the accommodations and notes saved before."""
-    wanted = set(payload.accommodations)
-    selected = db.scalars(
-        select(Accommodation).where(Accommodation.id.in_(wanted)).order_by(Accommodation.sort_order)
-    ).all()
-    unknown = sorted(wanted - {a.id for a in selected})
+    wanted: dict[str, bool] = {}  # accommodation id -> must-have
+    for entry in payload.accommodations:
+        entry = PassportAccommodationUpdate(id=entry) if isinstance(entry, str) else entry
+        # If an id is listed twice, it's a must-have if either entry says so.
+        wanted[entry.id] = wanted.get(entry.id, False) or entry.must_have
+    selected = db.scalars(select(Accommodation).where(Accommodation.id.in_(wanted))).all()
+    unknown = sorted(wanted.keys() - {a.id for a in selected})
     if unknown:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown accommodation: {', '.join(unknown)}"
         )
 
     passport = user.passport or Passport(user=user)
-    passport.accommodations = list(selected)
+    passport.accommodations = [
+        PassportAccommodation(accommodation=a, must_have=wanted[a.id]) for a in selected
+    ]
     passport.notes = payload.notes
     passport.updated_at = func.now()  # also when only the accommodations changed
     db.add(passport)
     db.commit()
     db.refresh(passport)
-    return PassportRead.model_validate(passport)
+    return read_passport(user)
 
 
 @router.get("/matches")
 def passport_matches(
     db: SessionDep, user: CurrentUser, filters: ClinicFiltersDep
 ) -> list[ClinicRead]:
-    """Clinics ranked by how many of your passport's accommodations they offer.
+    """Clinics ranked by how well they meet your passport's accommodations.
 
-    Takes the same filters as GET /clinics. Each result's `match` lists the needs it meets and
-    misses. If your passport is empty, clinics aren't ranked and `match` is null.
+    Takes the same filters as GET /clinics. Clinics missing the fewest must-haves come first,
+    then those offering the most of your accommodations overall. Each result's `match` lists
+    the needs it meets and misses. If your passport is empty, clinics aren't ranked and
+    `match` is null.
     """
-    needs = [a.id for a in user.passport.accommodations] if user.passport else []
-    return search_clinics(db, filters, needs)
+    chosen = _accommodations(user.passport) if user.passport else []
+    return search_clinics(db, filters, {a.id: a.must_have for a in chosen})
 
 
 @router.post("/share")
@@ -102,7 +128,7 @@ def read_shared_passport(token: str, db: SessionDep) -> SharedPassportRead:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This link isn't active")
     return SharedPassportRead(
         name=passport.user.profile.full_name if passport.share_include_name else None,
-        accommodations=[AccommodationRead.model_validate(a) for a in passport.accommodations],
+        accommodations=_accommodations(passport),
         notes=passport.notes,
         updated_at=passport.updated_at,
     )

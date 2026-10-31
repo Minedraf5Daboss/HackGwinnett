@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Column, ForeignKey, String, Table, Text, func, true
+from sqlalchemy import ForeignKey, String, Text, func, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -97,14 +97,20 @@ class ClinicAccommodation(Base):
     accommodation: Mapped[Accommodation] = relationship(lazy="joined")
 
 
-passport_accommodations = Table(
-    "passport_accommodations",
-    Base.metadata,
-    Column("user_id", ForeignKey("passports.user_id", ondelete="CASCADE"), primary_key=True),
-    Column(
-        "accommodation_id", ForeignKey("accommodations.id", ondelete="CASCADE"), primary_key=True
-    ),
-)
+class PassportAccommodation(Base):
+    """An accommodation in a passport: one the user must have, or one that's nice to have."""
+
+    __tablename__ = "passport_accommodations"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("passports.user_id", ondelete="CASCADE"), primary_key=True
+    )
+    accommodation_id: Mapped[str] = mapped_column(
+        ForeignKey("accommodations.id", ondelete="CASCADE"), primary_key=True
+    )
+    must_have: Mapped[bool] = mapped_column(default=True, server_default=true())
+
+    accommodation: Mapped[Accommodation] = relationship(lazy="joined")
 
 
 class Passport(Base):
@@ -122,6 +128,4 @@ class Passport(Base):
     share_include_name: Mapped[bool] = mapped_column(default=True, server_default=true())
 
     user: Mapped[User] = relationship(back_populates="passport")
-    accommodations: Mapped[list[Accommodation]] = relationship(
-        secondary=passport_accommodations, order_by=Accommodation.sort_order
-    )
+    accommodations: Mapped[list[PassportAccommodation]] = relationship(cascade="all, delete-orphan")

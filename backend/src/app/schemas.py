@@ -80,7 +80,10 @@ class ClinicMatch(BaseModel):
 
     met: list[str] = Field(description="Accommodation ids the clinic offers.")
     missing: list[str] = Field(description="Accommodation ids the clinic doesn't offer.")
-    score: float = Field(description="Share of needs met, from 0 to 1.")
+    missing_must_haves: list[str] = Field(
+        description="The ids in `missing` that are must-haves. Empty if the clinic meets them all."
+    )
+    score: float = Field(description="Share of needs met (must-haves and nice-to-haves), 0 to 1.")
 
 
 class ClinicRead(BaseModel):
@@ -100,13 +103,24 @@ class ClinicRead(BaseModel):
         default=None, description="Only set when you search with `lat` and `lng`."
     )
     match: ClinicMatch | None = Field(
-        default=None, description="Only set when ranking against needs (see `needs`)."
+        default=None,
+        description="Only set when ranking against needs (see `needs` and `nice_to_have`).",
     )
 
 
+class PassportAccommodationUpdate(BaseModel):
+    id: str = Field(description="e.g. 'asl-interpreter'")
+    must_have: bool = Field(default=True, description="False if it's only nice to have.")
+
+
 class PassportUpdate(BaseModel):
-    accommodations: list[str] = Field(
-        default_factory=list, max_length=50, description="Accommodation ids, e.g. 'asl-interpreter'"
+    accommodations: list[str | PassportAccommodationUpdate] = Field(
+        default_factory=list,
+        max_length=50,
+        description=(
+            "Accommodation ids, e.g. 'asl-interpreter', which are must-haves. For one that's only "
+            "nice to have, send {'id': ..., 'must_have': false} instead of the id."
+        ),
     )
     notes: str | None = Field(default=None, max_length=2000)
 
@@ -118,10 +132,12 @@ class PassportUpdate(BaseModel):
         return value
 
 
-class PassportRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class PassportAccommodationRead(AccommodationRead):
+    must_have: bool = Field(description="False if it's only nice to have.")
 
-    accommodations: list[AccommodationRead]
+
+class PassportRead(BaseModel):
+    accommodations: list[PassportAccommodationRead]
     notes: str | None
     updated_at: datetime | None = Field(description="None until the passport is first saved.")
     share_token: str | None = Field(
@@ -144,7 +160,7 @@ class SharedPassportRead(BaseModel):
     """The read-only passport anyone with the link can see."""
 
     name: str | None
-    accommodations: list[AccommodationRead]
+    accommodations: list[PassportAccommodationRead]
     notes: str | None
     updated_at: datetime
 

@@ -90,8 +90,41 @@ def test_rank_by_needs(client):
     assert clinics[-1]["match"] == {
         "met": [],
         "missing": ["wheelchair-access", "hearing-loop"],
+        "missing_must_haves": ["wheelchair-access", "hearing-loop"],
         "score": 0.0,
     }
+
+
+def test_rank_by_needs_and_nice_to_haves(client):
+    # hearing-loop is in both lists, so it counts as a must-have.
+    params = {
+        "needs": "hearing-loop",
+        "nice_to_have": "low-sensory,extended-appointments,hearing-loop",
+    }
+    clinics = client.get("/api/v1/clinics", params=params).json()
+    # Clinics with a hearing loop first, even Bluebird and Willow with no nice-to-haves.
+    assert [c["id"] for c in clinics[:5]] == [
+        "sunrise-community-clinic",
+        "bluebird-hearing-speech",
+        "willow-womens-health",
+        "calm-waters-behavioral-health",
+        "riverbend-pediatrics",
+    ]
+    assert clinics[3]["match"] == {
+        "met": ["low-sensory", "extended-appointments"],
+        "missing": ["hearing-loop"],
+        "missing_must_haves": ["hearing-loop"],
+        "score": 0.67,
+    }
+
+
+def test_rank_by_nice_to_haves_only(client):
+    clinics = client.get("/api/v1/clinics", params={"nice_to_have": "low-sensory"}).json()
+    assert len(clinics) == 12
+    assert all(c["match"]["missing_must_haves"] == [] for c in clinics)
+    assert [c["match"]["score"] for c in clinics[:4]] == [1.0, 1.0, 1.0, 1.0]
+    assert clinics[4]["match"]["score"] == 0.0
+    assert client.get("/api/v1/clinics", params={"nice_to_have": "teleport"}).status_code == 422
 
 
 def test_rank_by_needs_breaks_ties_by_distance(client):
