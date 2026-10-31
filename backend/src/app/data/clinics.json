@@ -1,0 +1,138 @@
+[
+  {
+    "id": "maple-creek-family-medicine", "name": "Maple Creek Family Medicine", "type": "Primary care",
+    "street": "120 Maple Creek Pkwy", "city": "Lawrenceville", "state": "GA", "zip": "30046",
+    "phone": "(770) 555-0101", "hours": "Mon-Fri 8am-5pm",
+    "latitude": 33.9581, "longitude": -83.9902,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "accessible-parking", "plain-language",
+      {"id": "roll-in-exam-table", "note": "In exam rooms 1 and 4"},
+      {"id": "asl-interpreter", "note": "Book 48 hours ahead"},
+      {"id": "extended-appointments", "note": "Ask for a double slot when booking"}
+    ]
+  },
+  {
+    "id": "riverbend-pediatrics", "name": "Riverbend Pediatrics", "type": "Pediatrics",
+    "street": "45 Riverbend Ct", "city": "Duluth", "state": "GA", "zip": "30096",
+    "phone": "(770) 555-0102", "hours": "Mon-Sat 8am-6pm",
+    "latitude": 34.0041, "longitude": -84.1471,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "support-person", "service-animal",
+      {"id": "low-sensory", "note": "Sensory-friendly room with weighted blankets"},
+      {"id": "extended-appointments", "note": "First or last appointment of the day available"},
+      {"id": "spoken-language-interpreter", "note": "Spanish and Korean on staff"}
+    ]
+  },
+  {
+    "id": "brightpath-dental", "name": "Brightpath Dental", "type": "Dental",
+    "street": "880 Brightpath Blvd", "city": "Norcross", "state": "GA", "zip": "30071",
+    "phone": "(770) 555-0103", "hours": "Mon-Thu 7am-4pm",
+    "latitude": 33.9398, "longitude": -84.2107,
+    "accommodations": [
+      "wheelchair-access", "accessible-parking", "text-communication",
+      {"id": "low-sensory", "note": "Noise-cancelling headphones and dimmable lights"},
+      {"id": "patient-lift", "note": "Transfer to the dental chair with a lift"}
+    ]
+  },
+  {
+    "id": "clearview-eye-care", "name": "Clearview Eye Care", "type": "Eye care",
+    "street": "300 Clearview Dr", "city": "Snellville", "state": "GA", "zip": "30078",
+    "phone": "(770) 555-0104", "hours": "Tue-Sat 9am-5pm",
+    "latitude": 33.8589, "longitude": -84.0177,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "service-animal",
+      {"id": "large-print-braille", "note": "All forms available in Braille"},
+      {"id": "plain-language", "note": "Results explained step by step"}
+    ]
+  },
+  {
+    "id": "harbor-urgent-care", "name": "Harbor Urgent Care", "type": "Urgent care",
+    "street": "1500 Harbor Point Rd", "city": "Buford", "state": "GA", "zip": "30518",
+    "phone": "(770) 555-0105", "hours": "Every day 8am-10pm",
+    "latitude": 34.1189, "longitude": -84.0061,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "accessible-parking", "service-animal", "support-person",
+      {"id": "asl-interpreter", "note": "Video interpreter available 24/7"},
+      {"id": "spoken-language-interpreter", "note": "Phone interpreters for 200+ languages"}
+    ]
+  },
+  {
+    "id": "willow-womens-health", "name": "Willow Women's Health", "type": "Women's health",
+    "street": "77 Willow Bend Way", "city": "Suwanee", "state": "GA", "zip": "30024",
+    "phone": "(770) 555-0106", "hours": "Mon-Fri 8:30am-4:30pm",
+    "latitude": 34.0532, "longitude": -84.0688,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "support-person", "plain-language",
+      {"id": "roll-in-exam-table", "note": "Height-adjustable exam tables in every room"},
+      {"id": "patient-lift", "note": "Ceiling lift in room 2"},
+      {"id": "hearing-loop", "note": "At the front desk"}
+    ]
+  },
+  {
+    "id": "summit-physical-therapy", "name": "Summit Physical Therapy", "type": "Physical therapy",
+    "street": "210 Summit Ridge Pkwy", "city": "Lilburn", "state": "GA", "zip": "30047",
+    "phone": "(770) 555-0107", "hours": "Mon-Fri 7am-7pm",
+    "latitude": 33.8915, "longitude": -84.1402,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "accessible-parking", "patient-lift", "extended-appointments",
+      {"id": "roll-in-exam-table", "note": "Adjustable treatment tables"}
+    ]
+  },
+  {
+    "id": "calm-waters-behavioral-health", "name": "Calm Waters Behavioral Health", "type": "Behavioral health",
+    "street": "9 Calm Waters Ln", "city": "Peachtree Corners", "state": "GA", "zip": "30092",
+    "phone": "(770) 555-0108", "hours": "Mon-Fri 9am-7pm",
+    "latitude": 33.9715, "longitude": -84.2189,
+    "accommodations": [
+      "wheelchair-access", "support-person", "service-animal", "plain-language",
+      {"id": "low-sensory", "note": "Quiet waiting room; we can call you in from your car"},
+      {"id": "text-communication", "note": "Check in and message your counselor by text"},
+      {"id": "extended-appointments", "note": "60- and 90-minute sessions"}
+    ]
+  },
+  {
+    "id": "oak-lane-primary-care", "name": "Oak Lane Primary Care", "type": "Primary care",
+    "street": "455 Oak Lane Cir", "city": "Dacula", "state": "GA", "zip": "30019",
+    "phone": "(770) 555-0109", "hours": "Mon-Fri 8am-6pm",
+    "latitude": 33.9872, "longitude": -83.8954,
+    "accommodations": [
+      "wheelchair-access", "accessible-parking",
+      {"id": "spoken-language-interpreter", "note": "Spanish and Vietnamese on staff"},
+      {"id": "large-print-braille", "note": "Large-print forms"}
+    ]
+  },
+  {
+    "id": "sunrise-community-clinic", "name": "Sunrise Community Clinic", "type": "Primary care",
+    "street": "60 Sunrise Ave", "city": "Grayson", "state": "GA", "zip": "30017",
+    "phone": "(770) 555-0110", "hours": "Mon-Sat 8am-8pm",
+    "latitude": 33.8957, "longitude": -83.9531,
+    "accommodations": [
+      "wheelchair-access", "accessible-restroom", "accessible-parking", "roll-in-exam-table",
+      "asl-interpreter", "spoken-language-interpreter", "text-communication", "plain-language",
+      "low-sensory", "large-print-braille", "hearing-loop", "extended-appointments", "support-person",
+      "service-animal",
+      {"id": "patient-lift", "note": "Sliding-board and lift transfers"}
+    ]
+  },
+  {
+    "id": "bluebird-hearing-speech", "name": "Bluebird Hearing & Speech", "type": "Audiology",
+    "street": "18 Bluebird Trl", "city": "Sugar Hill", "state": "GA", "zip": "30518",
+    "phone": "(770) 555-0111", "hours": "Mon-Thu 9am-5pm",
+    "latitude": 34.1082, "longitude": -84.0312,
+    "accommodations": [
+      "wheelchair-access", "text-communication", "support-person",
+      {"id": "asl-interpreter", "note": "ASL-fluent audiologist on staff"},
+      {"id": "hearing-loop", "note": "In every room"}
+    ]
+  },
+  {
+    "id": "pinecrest-dental-group", "name": "Pinecrest Dental Group", "type": "Dental",
+    "street": "2400 Pinecrest Rd", "city": "Loganville", "state": "GA", "zip": "30052",
+    "phone": "(770) 555-0112", "hours": "Mon-Fri 8am-5pm",
+    "latitude": 33.8405, "longitude": -83.9024,
+    "accommodations": [
+      "accessible-parking", "support-person",
+      {"id": "extended-appointments", "note": "Extra time for patients who need breaks"}
+    ]
+  }
+]

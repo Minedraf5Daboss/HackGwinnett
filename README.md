@@ -1,7 +1,18 @@
 # MedAssist
 
-Starter code for a medical assistance app. People can create an account, log in, and keep a
-private health profile: allergies, medications, conditions, and an emergency contact.
+A medical assistance app focused on accessible care.
+
+- **Accessibility Passport**: save the accommodations you need at appointments (wheelchair
+  access, ASL interpreter, low-sensory environment, and more), plus notes.
+- **Clinic directory**: search clinics, filter by the accommodations they offer, and sort by
+  distance for a map. Each clinic lists its accessibility badges, such as "Roll-in exam table".
+- **Plain-language simplifier**: paste medical text and get everyday words back, with a list of
+  every term that was changed.
+- **Health profile**: allergies, medications, conditions, and an emergency contact.
+
+> The clinics are **fictional demo data** (phone numbers use the reserved 555-01xx range).
+> Nothing in this app is medical advice.
+
 - **backend/**: Python API built with FastAPI, a SQLite database (SQLAlchemy + Alembic
   migrations), and login with JWT tokens.
 - **frontend/**: React website built with Vite and Tailwind CSS.
@@ -33,6 +44,7 @@ Then open **http://localhost:5173**. The website forwards `/api` requests to the
 | `make test`                   | Run the backend tests and check the website builds   |
 | `make lint` / `make format`   | Check / fix Python code style                        |
 | `make migrate`                | Update the database to the latest tables             |
+| `make seed`                   | Reload the demo clinics and accommodation types      |
 | `make revision m="message"`   | Create a migration after changing `models.py`        |
 
 ## API
@@ -45,6 +57,32 @@ Then open **http://localhost:5173**. The website forwards `/api` requests to the
 | GET    | `/api/v1/users/me`       | ✓     | The logged-in user                           |
 | GET    | `/api/v1/profile`        | ✓     | Your health profile                          |
 | PATCH  | `/api/v1/profile`        | ✓     | Update some or all profile fields            |
+| GET    | `/api/v1/passport`       | ✓     | Your Accessibility Passport                  |
+| PUT    | `/api/v1/passport`       | ✓     | Save it (JSON: `accommodations` ids, `notes`)|
+| GET    | `/api/v1/accommodations` |       | All accommodation types, with categories     |
+| GET    | `/api/v1/clinics`        |       | Search clinics (see below)                   |
+| GET    | `/api/v1/clinics/types`  |       | Clinic types, for a filter dropdown          |
+| GET    | `/api/v1/clinics/{id}`   |       | One clinic with its badges                   |
+| POST   | `/api/v1/simplify`       |       | Simplify medical text (JSON: `text`)         |
+
+`GET /api/v1/clinics` takes these optional query parameters:
+
+- `q`: search names, types, cities, ZIP codes, and badge names
+- `type`: one clinic type, e.g. `Dental`
+- `accommodations`: comma-separated ids, e.g. `wheelchair-access,asl-interpreter`. Only
+  clinics offering **all** of them are returned.
+- `lat` and `lng`: sort by distance from that point and fill in `distance_miles`. Each
+  clinic's `latitude` and `longitude` are ready for a map.
+
+## Demo data
+
+The accommodation types, clinics, and simplifier glossary are JSON files in
+`backend/src/app/data/`. Edit them to add clinics or jargon terms:
+
+- After changing `accommodations.json` or `clinics.json`, run `make seed` (`make dev` does it
+  for you). Saved passports are kept.
+- `glossary.json` is read when the API starts. Mark abbreviations `"case_sensitive": true`
+  so that, for example, "BID" (twice a day) is replaced but "bid" isn't.
 
 ## Project layout
 
@@ -53,10 +91,13 @@ backend/
   src/app/
     main.py            # creates the FastAPI app
     config.py          # settings, read from backend/.env
-    models.py          # database tables: User, Profile
+    models.py          # database tables: users, profiles, passports, clinics, ...
     schemas.py         # what the API accepts and returns
     security.py        # password hashing and login tokens
-    api/routes/        # health, auth, users, profile
+    simplifier.py      # the plain-language simplifier
+    seed.py            # loads data/*.json into the database
+    data/              # accommodation types, demo clinics, jargon glossary
+    api/routes/        # one file per group of endpoints
   migrations/          # database changes (Alembic)
   tests/               # pytest
 frontend/

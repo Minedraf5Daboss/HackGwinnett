@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from app.config import Settings
 from app.db import Base
 from app.main import create_app
+from app.seed import seed
 
 
 @pytest.fixture
@@ -16,6 +17,8 @@ def app():
         )
     )
     Base.metadata.create_all(app.state.engine)
+    with app.state.session_factory() as db:
+        seed(db)
     return app
 
 

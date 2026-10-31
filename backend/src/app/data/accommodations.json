@@ -1,0 +1,17 @@
+[
+  {"id": "wheelchair-access", "label": "Wheelchair accessible", "category": "Mobility", "description": "Step-free entrance, doorways, and hallways wide enough for a wheelchair."},
+  {"id": "roll-in-exam-table", "label": "Roll-in exam table", "category": "Mobility", "description": "Height-adjustable exam table you can transfer onto from a wheelchair."},
+  {"id": "patient-lift", "label": "Transfer lift", "category": "Mobility", "description": "Patient lift and trained staff to help with transfers."},
+  {"id": "accessible-restroom", "label": "Accessible restroom", "category": "Mobility", "description": "Restroom with grab bars and room to turn a wheelchair."},
+  {"id": "accessible-parking", "label": "Accessible parking", "category": "Mobility", "description": "Accessible parking spaces close to the entrance."},
+  {"id": "asl-interpreter", "label": "ASL interpreter", "category": "Communication", "description": "American Sign Language interpreter, in person or by video."},
+  {"id": "spoken-language-interpreter", "label": "Language interpreter", "category": "Communication", "description": "Interpreter for languages other than English."},
+  {"id": "text-communication", "label": "Text-based communication", "category": "Communication", "description": "Book, check in, and talk with staff by text or in writing."},
+  {"id": "plain-language", "label": "Plain-language explanations", "category": "Communication", "description": "Staff explain things in everyday words and check that you understood."},
+  {"id": "low-sensory", "label": "Low-sensory environment", "category": "Sensory", "description": "Quiet room, dimmable lights, and little background noise."},
+  {"id": "large-print-braille", "label": "Large print or Braille", "category": "Sensory", "description": "Forms and instructions in large print or Braille."},
+  {"id": "hearing-loop", "label": "Hearing loop", "category": "Sensory", "description": "Assistive listening system that works with hearing aids."},
+  {"id": "extended-appointments", "label": "Extended appointments", "category": "Scheduling & support", "description": "Longer appointment times when you need them."},
+  {"id": "support-person", "label": "Support person welcome", "category": "Scheduling & support", "description": "A caregiver, friend, or support person can join you."},
+  {"id": "service-animal", "label": "Service animals welcome", "category": "Scheduling & support", "description": "Service animals are welcome in all patient areas."}
+]

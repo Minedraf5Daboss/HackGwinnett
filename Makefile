@@ -1,4 +1,4 @@
-.PHONY: install dev backend frontend test lint format migrate revision
+.PHONY: install dev backend frontend test lint format migrate seed revision
 
 VENV := backend/.venv/bin
 
@@ -10,7 +10,7 @@ backend/.env:  ## Create backend/.env from the example, with a fresh secret key
 	sed "s|^APP_SECRET_KEY=.*|APP_SECRET_KEY=$$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')|" \
 		backend/.env.example > $@
 
-dev: migrate  ## Run the API (port 8000) and the website (port 5173) together
+dev: migrate seed  ## Run the API (port 8000) and the website (port 5173) together
 	$(MAKE) -j2 backend frontend
 
 backend:
@@ -31,6 +31,9 @@ format:
 
 migrate:  ## Apply database migrations
 	cd backend && .venv/bin/alembic upgrade head
+
+seed:  ## Load demo accommodations and clinics from backend/src/app/data/
+	cd backend && .venv/bin/python -m app.seed
 
 revision:  ## Create a migration from model changes: make revision m="add appointments"
 	cd backend && .venv/bin/alembic revision --autogenerate -m "$(m)"

@@ -55,3 +55,85 @@ class ProfileRead(ProfileUpdate):
     model_config = ConfigDict(from_attributes=True)
 
     updated_at: datetime
+
+
+class AccommodationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    label: str
+    category: str
+    description: str
+
+
+class ClinicAccommodationRead(BaseModel):
+    """An accommodation as shown on a clinic's badge, with the clinic's own note."""
+
+    id: str
+    label: str
+    category: str
+    note: str | None
+
+
+class ClinicRead(BaseModel):
+    id: str
+    name: str
+    type: str
+    street: str
+    city: str
+    state: str
+    zip: str
+    phone: str
+    hours: str | None
+    latitude: float
+    longitude: float
+    accommodations: list[ClinicAccommodationRead]
+    distance_miles: float | None = Field(
+        default=None, description="Only set when you search with `lat` and `lng`."
+    )
+
+
+class PassportUpdate(BaseModel):
+    accommodations: list[str] = Field(
+        default_factory=list, max_length=50, description="Accommodation ids, e.g. 'asl-interpreter'"
+    )
+    notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def _blank_to_none(cls, value):
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+
+class PassportRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    accommodations: list[AccommodationRead]
+    notes: str | None
+    updated_at: datetime | None = Field(description="None until the passport is first saved.")
+
+
+class SimplifyRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("text can't be blank")
+        return value
+
+
+class SimplifiedTerm(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    term: str = Field(description="The term as it first appeared in the text.")
+    plain: str
+    count: int
+
+
+class SimplifyResponse(BaseModel):
+    simplified: str
+    terms: list[SimplifiedTerm]
