@@ -18,16 +18,24 @@ export default function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-teal-800">
             <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-7 w-7" />
             MedAssist
           </Link>
           {!loading && (
-            <nav className="flex items-center gap-1">
+            <nav className="flex flex-wrap items-center gap-1">
+              <NavLink to="/clinics" className={navLinkClass}>
+                Find a clinic
+              </NavLink>
+              <NavLink to="/simplify" className={navLinkClass}>
+                Plain language
+              </NavLink>
               {user ? (
                 <>
-                  <span className="hidden px-3 text-sm text-slate-500 sm:inline">{user.email}</span>
+                  <NavLink to="/passport" className={navLinkClass}>
+                    My passport
+                  </NavLink>
                   <NavLink to="/profile" className={navLinkClass}>
                     My profile
                   </NavLink>
@@ -54,7 +62,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <Outlet />
       </main>
 

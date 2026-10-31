@@ -2,6 +2,8 @@
 
 const BUTTON_VARIANTS = {
   primary: 'bg-teal-700 text-white hover:bg-teal-800 focus-visible:outline-teal-700',
+  secondary:
+    'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50 focus-visible:outline-teal-700',
   light: 'bg-white text-teal-800 hover:bg-teal-50 focus-visible:outline-white',
   outline: 'text-white ring-1 ring-white/70 hover:bg-white/10 focus-visible:outline-white',
 };
@@ -14,6 +16,10 @@ export function buttonClass(variant = 'primary') {
 export function Button({ variant, className = '', ...props }) {
   return <button className={`${buttonClass(variant)} ${className}`} {...props} />;
 }
+
+/** Text box styles, shared by inputs, textareas, and selects. */
+export const inputClass =
+  'block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-xs focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none';
 
 /** A labelled input. Pass `multiline` for a textarea; other props go to the input itself. */
 export function Field({ label, name, hint, multiline = false, className = '', ...inputProps }) {
@@ -29,7 +35,7 @@ export function Field({ label, name, hint, multiline = false, className = '', ..
         name={name}
         rows={multiline ? 3 : undefined}
         aria-describedby={hintId}
-        className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-xs focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none"
+        className={`mt-1 ${inputClass}`}
         {...inputProps}
       />
       {hint && (
@@ -38,6 +44,16 @@ export function Field({ label, name, hint, multiline = false, className = '', ..
         </p>
       )}
     </div>
+  );
+}
+
+/** A white panel with a border, for grouping part of a page. */
+export function Card({ as: Tag = 'section', className = '', ...props }) {
+  return (
+    <Tag
+      className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-xs ${className}`}
+      {...props}
+    />
   );
 }
 

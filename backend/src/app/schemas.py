@@ -143,6 +143,9 @@ class PassportRead(BaseModel):
     share_token: str | None = Field(
         default=None, description="Set while a share link is on (see POST /passport/share)."
     )
+    share_include_name: bool = Field(
+        default=True, description="Whether the shared passport shows your name."
+    )
 
 
 class PassportShareCreate(BaseModel):

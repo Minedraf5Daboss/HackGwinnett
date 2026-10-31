@@ -47,6 +47,7 @@ def read_passport(user: CurrentUser) -> PassportRead:
         notes=passport.notes,
         updated_at=passport.updated_at,
         share_token=passport.share_token,
+        share_include_name=passport.share_include_name,
     )
 
 

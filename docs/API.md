@@ -94,7 +94,8 @@ Both endpoints return the accommodations in display order, each with `must_have`
   ],
   "notes": "Please text me.",
   "updated_at": "2026-10-31T16:28:15",
-  "share_token": null
+  "share_token": null,
+  "share_include_name": true
 }
 ```
 
@@ -125,7 +126,8 @@ A read-only view of the passport that anyone with the link can open, for showing
 
 The API only provides the token. Make a page on the website, for example
 `/shared/:token`, that calls this endpoint, and share that page's URL. `GET /passport`
-includes `share_token`, so you can show whether sharing is on.
+includes `share_token` and `share_include_name`, so you can show whether sharing is on and
+whether the name is shown.
 
 ## Clinic directory
 

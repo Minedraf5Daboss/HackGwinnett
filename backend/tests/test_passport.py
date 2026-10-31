@@ -9,6 +9,7 @@ def test_new_user_has_empty_passport(client, auth_headers):
         "notes": None,
         "updated_at": None,
         "share_token": None,
+        "share_include_name": True,
     }
 
 
@@ -174,6 +175,8 @@ def test_share_link(client, auth_headers):
     # Sharing again keeps the same link; the name can be hidden.
     resp = client.post("/api/v1/passport/share", json={"include_name": False}, headers=auth_headers)
     assert resp.json() == {"token": token, "include_name": False}
+    passport = client.get("/api/v1/passport", headers=auth_headers).json()
+    assert passport["share_include_name"] is False
     assert client.get(f"/api/v1/shared-passports/{token}").json()["name"] is None
 
     # Turning sharing off kills the link; turning it on again makes a new one.
