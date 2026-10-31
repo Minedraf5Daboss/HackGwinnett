@@ -7,8 +7,9 @@
       "request": "launch",
       "module": "uvicorn",
       "args": ["app.main:app", "--reload", "--port", "8000"],
-      "envFile": "${workspaceFolder}/.env",
-      "jinja": true
+      "cwd": "${workspaceFolder}/backend",
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "envFile": "${workspaceFolder}/backend/.env"
     },
     {
       "name": "Debug tests",
@@ -16,6 +17,8 @@
       "request": "launch",
       "module": "pytest",
       "args": ["-q"],
+      "cwd": "${workspaceFolder}/backend",
+      "python": "${workspaceFolder}/backend/.venv/bin/python",
       "justMyCode": false
     }
   ]

@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 
 from app.api.deps import SessionDep, SettingsDep
-from app.models import User
+from app.models import Profile, User
 from app.schemas import Token, UserCreate, UserRead
 from app.security import create_access_token, hash_password, verify_password
 
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register(payload: UserCreate, db: SessionDep) -> UserRead:
     if db.scalar(select(User).where(User.email == payload.email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
-    user = User(email=payload.email, hashed_password=hash_password(payload.password))
+    user = User(
+        email=payload.email, hashed_password=hash_password(payload.password), profile=Profile()
+    )
     db.add(user)
     db.commit()
     db.refresh(user)

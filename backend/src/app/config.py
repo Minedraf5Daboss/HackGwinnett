@@ -11,7 +11,7 @@ INSECURE_SECRET = "change-me"
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="APP_", extra="ignore")
 
-    name: str = "app"
+    name: str = "MedAssist API"
     env: str = "development"
     debug: bool = False
     host: str = "127.0.0.1"
