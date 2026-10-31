@@ -1,6 +1,7 @@
 """Request/response models."""
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -17,11 +18,49 @@ class UserRead(BaseModel):
     email: EmailStr
     is_active: bool
     created_at: datetime
+    two_factor_enabled: bool
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class TwoFactorChallenge(BaseModel):
+    """What POST /auth/token returns instead of a Token when the account has 2FA on."""
+
+    two_factor_required: Literal[True] = True
+    two_factor_token: str = Field(
+        description="Send to POST /auth/2fa/verify with a code. Expires in 5 minutes."
+    )
+
+
+class TwoFactorSetupRead(BaseModel):
+    secret: str = Field(description="For typing into the app if the QR code can't be scanned.")
+    otpauth_uri: str = Field(description="The link inside the QR code.")
+    qr_code: str = Field(description="The QR code as an SVG data URI, for an <img src>.")
+
+
+class TwoFactorCode(BaseModel):
+    code: str = Field(
+        min_length=6,
+        max_length=20,
+        description="The 6-digit code from the authenticator app, or a recovery code.",
+    )
+
+
+class TwoFactorVerify(TwoFactorCode):
+    two_factor_token: str = Field(description="From POST /auth/token.")
+
+
+class TwoFactorDisable(TwoFactorCode):
+    password: str
+
+
+class RecoveryCodesRead(BaseModel):
+    recovery_codes: list[str] = Field(
+        description="Shown only this once. Each works one time in place of a 6-digit code."
+    )
 
 
 class ProfileUpdate(BaseModel):

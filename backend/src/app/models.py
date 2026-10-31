@@ -21,6 +21,46 @@ class User(Base):
     passport: Mapped["Passport | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    two_factor: Mapped["TwoFactor | None"] = relationship(cascade="all, delete-orphan")
+
+    @property
+    def two_factor_enabled(self) -> bool:
+        return self.two_factor is not None and self.two_factor.enabled_at is not None
+
+
+class TwoFactor(Base):
+    """A user's authenticator app, for two-step verification at login.
+
+    Created when setup starts. Until the user confirms it with a code, `enabled_at` is null and
+    it isn't used at login.
+    """
+
+    __tablename__ = "two_factor"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    secret: Mapped[str] = mapped_column(String(64))
+    enabled_at: Mapped[datetime | None]
+    # The time step of the last code accepted, so the same code can't be used twice.
+    last_used_counter: Mapped[int | None]
+    # Wrong codes in a row. Too many locks out code checks until `locked_until`.
+    failed_attempts: Mapped[int] = mapped_column(default=0, server_default="0")
+    locked_until: Mapped[datetime | None]
+
+    recovery_codes: Mapped[list["RecoveryCode"]] = relationship(cascade="all, delete-orphan")
+
+
+class RecoveryCode(Base):
+    """A one-time code for logging in without the authenticator app. Only a hash is stored."""
+
+    __tablename__ = "recovery_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("two_factor.user_id", ondelete="CASCADE"), index=True
+    )
+    code_hash: Mapped[str] = mapped_column(String(64))
 
 
 class Profile(Base):

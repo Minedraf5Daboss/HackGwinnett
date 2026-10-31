@@ -6,8 +6,13 @@ from sqlalchemy import select
 
 from app.api.deps import SessionDep, SettingsDep
 from app.models import Profile, User
-from app.schemas import Token, UserCreate, UserRead
-from app.security import create_access_token, hash_password, verify_password
+from app.schemas import Token, TwoFactorChallenge, UserCreate, UserRead
+from app.security import (
+    create_access_token,
+    create_two_factor_token,
+    hash_password,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -28,8 +33,12 @@ def register(payload: UserCreate, db: SessionDep) -> UserRead:
 @router.post("/token")
 def login(
     form: Annotated[OAuth2PasswordRequestForm, Depends()], db: SessionDep, settings: SettingsDep
-) -> Token:
-    """Exchange email (as `username`) and password for a bearer token."""
+) -> Token | TwoFactorChallenge:
+    """Exchange email (as `username`) and password for a bearer token.
+
+    If the account has two-step verification on, this returns a `two_factor_token` instead.
+    Send it with a code to POST /auth/2fa/verify to get the bearer token.
+    """
     user = db.scalar(select(User).where(User.email == form.username))
     if user is None or not verify_password(form.password, user.hashed_password):
         raise HTTPException(
@@ -37,4 +46,6 @@ def login(
             "Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if user.two_factor_enabled:
+        return TwoFactorChallenge(two_factor_token=create_two_factor_token(str(user.id), settings))
     return Token(access_token=create_access_token(str(user.id), settings))

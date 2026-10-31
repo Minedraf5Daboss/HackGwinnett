@@ -1,1 +1,17 @@
 @import 'tailwindcss';
+
+@theme {
+  /* Use as `motion-safe:animate-fade-up`, so it's skipped for people who turn off motion. */
+  --animate-fade-up: fade-up 0.35s ease-out both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

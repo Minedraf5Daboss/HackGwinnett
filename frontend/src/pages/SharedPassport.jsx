@@ -1,7 +1,9 @@
+import { IdCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import { accommodationIcon } from '../accommodations.js';
 import { api } from '../api.js';
-import { Card } from '../components/ui.jsx';
+import { Card, IconTile } from '../components/ui.jsx';
 
 /** The API's times are in UTC, sometimes without a time zone on the end. */
 function formatDate(iso) {
@@ -39,7 +41,8 @@ export default function SharedPassport() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-semibold tracking-wide text-teal-700 uppercase">
+        <p className="flex items-center gap-3 text-sm font-semibold tracking-wide text-teal-700 uppercase">
+          <IconTile icon={IdCard} />
           Accessibility Passport
         </p>
         <h1 className="mt-1 text-3xl font-bold">
@@ -78,12 +81,18 @@ function AccommodationList({ title, accommodations, highlight = false }) {
     <Card className={highlight ? 'ring-2 ring-teal-600' : ''}>
       <h2 className="text-lg font-semibold">{title}</h2>
       <ul className="mt-3 space-y-3">
-        {accommodations.map((a) => (
-          <li key={a.id}>
-            <p className="text-lg font-medium">{a.label}</p>
-            <p className="text-slate-600">{a.description}</p>
-          </li>
-        ))}
+        {accommodations.map((a) => {
+          const Icon = accommodationIcon(a.id);
+          return (
+            <li key={a.id} className="flex gap-3">
+              <Icon aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-teal-700" />
+              <div>
+                <p className="text-lg font-medium">{a.label}</p>
+                <p className="text-slate-600">{a.description}</p>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );

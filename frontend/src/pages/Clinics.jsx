@@ -1,9 +1,20 @@
+import {
+  CircleAlert,
+  CircleCheck,
+  Clock,
+  LocateFixed,
+  MapPin,
+  Navigation,
+  Phone,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { byCategory, useAccommodations } from '../accommodations.js';
+import { accommodationIcon, byCategory, useAccommodations } from '../accommodations.js';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { Alert, Button, Card, Field, inputClass } from '../components/ui.jsx';
+import { Alert, Button, Card, Field, PageHeader, inputClass } from '../components/ui.jsx';
 
 export default function Clinics() {
   const { user, loading: authLoading } = useAuth();
@@ -101,13 +112,9 @@ export default function Clinics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Find a clinic</h1>
-        <p className="mt-1 text-slate-600">
-          Search clinics around Gwinnett County and see the accessibility support each one
-          offers.
-        </p>
-      </div>
+      <PageHeader icon={Search} title="Find a clinic">
+        Search clinics around Gwinnett County and see the accessibility support each one offers.
+      </PageHeader>
 
       <Card as="form" role="search" onSubmit={(e) => e.preventDefault()} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-[1fr_14rem]">
@@ -140,6 +147,7 @@ export default function Clinics() {
         {accommodations && (
           <details className="rounded-lg border border-slate-200 px-4 py-3">
             <summary className="cursor-pointer text-sm font-medium text-slate-700">
+              <SlidersHorizontal aria-hidden="true" className="mr-1.5 inline h-4 w-4" />
               Only show clinics with…
               {required.length > 0 && ` (${required.length} selected)`}
             </summary>
@@ -178,6 +186,7 @@ export default function Clinics() {
             </p>
           ) : (
             <Button type="button" variant="secondary" onClick={locate} disabled={locating}>
+              <LocateFixed aria-hidden="true" className="mr-2 h-4 w-4" />
               {locating ? 'Finding you…' : 'Use my location'}
             </Button>
           )}
@@ -251,57 +260,73 @@ function ClinicCard({ clinic, labels, hasMustHaves }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{clinic.name}</h2>
-          <p className="text-sm text-slate-600">
-            {clinic.type} · {clinic.city}
-            {clinic.distance_miles !== null && ` · ${clinic.distance_miles} mi away`}
+          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+              {clinic.type}
+            </span>
+            {clinic.city}
+            {clinic.distance_miles !== null && (
+              <span className="inline-flex items-center gap-1 text-teal-800">
+                <Navigation aria-hidden="true" className="h-3.5 w-3.5" />
+                {clinic.distance_miles} mi away
+              </span>
+            )}
           </p>
         </div>
         {match && <MatchSummary match={match} labels={labels} hasMustHaves={hasMustHaves} />}
       </div>
 
-      <div className="mt-3 space-y-1 text-sm text-slate-700">
-        <p>
-          {address} ·{' '}
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-teal-700 hover:underline"
-          >
-            Directions
-          </a>
+      <div className="mt-4 space-y-1.5 text-sm text-slate-700">
+        <p className="flex items-start gap-2">
+          <MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+          <span>
+            {address} ·{' '}
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-teal-700 hover:underline"
+            >
+              Directions
+            </a>
+          </span>
         </p>
-        <p>
+        <p className="flex items-center gap-2">
+          <Phone aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
           <a
             href={`tel:${clinic.phone.replace(/[^\d+]/g, '')}`}
             className="font-medium text-teal-700 hover:underline"
           >
             {clinic.phone}
           </a>
-          {clinic.hours && ` · ${clinic.hours}`}
+          {clinic.hours && (
+            <>
+              <Clock aria-hidden="true" className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
+              {clinic.hours}
+            </>
+          )}
         </p>
       </div>
 
       <ul aria-label="Accessibility support" className="mt-4 flex flex-wrap gap-2">
-        {clinic.accommodations.map((a) => (
-          <li
-            key={a.id}
-            className={`rounded-full px-3 py-1 text-sm ${
-              met.has(a.id)
-                ? 'bg-teal-50 text-teal-900 ring-1 ring-teal-600/40'
-                : 'bg-slate-100 text-slate-700'
-            }`}
-          >
-            {met.has(a.id) && (
-              <>
-                <span aria-hidden="true">✓ </span>
-                <span className="sr-only">In your passport: </span>
-              </>
-            )}
-            {a.label}
-            {a.note && <span className="text-slate-500"> · {a.note}</span>}
-          </li>
-        ))}
+        {clinic.accommodations.map((a) => {
+          const Icon = accommodationIcon(a.id);
+          return (
+            <li
+              key={a.id}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm ${
+                met.has(a.id)
+                  ? 'bg-teal-50 text-teal-900 ring-1 ring-teal-600/40'
+                  : 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              {met.has(a.id) && <span className="sr-only">In your passport: </span>}
+              {a.label}
+              {a.note && <span className="text-slate-500"> · {a.note}</span>}
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );
@@ -314,20 +339,41 @@ function MatchSummary({ match, labels, hasMustHaves }) {
 
   let headline = `Has ${match.met.length} of your ${total} needs`;
   let colors = 'bg-slate-100 text-slate-800';
+  let bar = 'bg-teal-600';
+  let Icon = CircleCheck;
   if (hasMustHaves && missingMust.length === 0) {
     headline = 'Has all your must-haves';
-    colors = 'bg-emerald-50 text-emerald-900';
+    colors = 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-600/20';
+    bar = 'bg-emerald-600';
   } else if (hasMustHaves) {
     const count = missingMust.length === 1 ? 'a must-have' : `${missingMust.length} must-haves`;
     headline = `Missing ${count}`;
-    colors = 'bg-amber-50 text-amber-900';
+    colors = 'bg-amber-50 text-amber-900 ring-1 ring-amber-600/20';
+    bar = 'bg-amber-500';
+    Icon = CircleAlert;
   }
 
   return (
-    <div className={`max-w-xs rounded-lg px-3 py-2 text-sm ${colors}`}>
-      <p className="font-semibold">{headline}</p>
+    <div className={`w-full max-w-xs rounded-xl px-3 py-2.5 text-sm sm:w-64 ${colors}`}>
+      <p className="flex items-center gap-1.5 font-semibold">
+        <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+        {headline}
+      </p>
+      <div
+        role="meter"
+        aria-label="Your needs this clinic meets"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={match.met.length}
+        className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5"
+      >
+        <div
+          className={`h-full rounded-full ${bar} transition-[width] duration-500`}
+          style={{ width: `${Math.round(match.score * 100)}%` }}
+        />
+      </div>
       {hasMustHaves && (
-        <p>
+        <p className="mt-1.5">
           {match.met.length} of {total} of your needs
         </p>
       )}
@@ -335,7 +381,9 @@ function MatchSummary({ match, labels, hasMustHaves }) {
         <p>
           Doesn't offer:{' '}
           {match.missing
-            .map((id) => (missingMust.includes(id) ? `${labels[id] ?? id} (must-have)` : labels[id] ?? id))
+            .map((id) =>
+              missingMust.includes(id) ? `${labels[id] ?? id} (must-have)` : (labels[id] ?? id),
+            )
             .join(', ')}
         </p>
       )}

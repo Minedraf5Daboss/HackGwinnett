@@ -8,6 +8,7 @@ from app.api.routes import (
     passport,
     profile,
     simplify,
+    two_factor,
     users,
 )
 
@@ -16,6 +17,7 @@ api_router.include_router(health.router)
 
 v1 = APIRouter(prefix="/api/v1")
 v1.include_router(auth.router)
+v1.include_router(two_factor.router)
 v1.include_router(users.router)
 v1.include_router(profile.router)
 v1.include_router(passport.router)

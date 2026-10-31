@@ -1,8 +1,23 @@
+import { ArrowRight, IdCard, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { byCategory, useAccommodations } from '../accommodations.js';
+import {
+  accommodationIcon,
+  byCategory,
+  categoryIcon,
+  useAccommodations,
+} from '../accommodations.js';
 import { api } from '../api.js';
-import { Alert, Button, Card, Field, buttonClass, inputClass } from '../components/ui.jsx';
+import {
+  Alert,
+  Button,
+  Card,
+  Field,
+  IconTile,
+  PageHeader,
+  buttonClass,
+  inputClass,
+} from '../components/ui.jsx';
 
 /** The full address of a shared passport page, to give to clinic staff. */
 function shareUrl(token) {
@@ -75,18 +90,18 @@ export default function Passport() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">My Accessibility Passport</h1>
-          <p className="mt-1 text-slate-600">
-            Choose the support you need at appointments. Mark the ones you can't do without as{' '}
-            <strong className="font-semibold">must-haves</strong>. We use your passport to find
-            clinics that fit, and you can share it with clinic staff.
-          </p>
-        </div>
+        <PageHeader icon={IdCard} title="My Accessibility Passport">
+          Choose the support you need at appointments. Mark the ones you can't do without as{' '}
+          <strong className="font-semibold">must-haves</strong>. We use your passport to find
+          clinics that fit, and you can share it with clinic staff.
+        </PageHeader>
 
         {byCategory(accommodations).map(([category, items]) => (
           <Card key={category}>
-            <h2 className="text-lg font-semibold">{category}</h2>
+            <h2 className="flex items-center gap-3 text-lg font-semibold">
+              <IconTile icon={categoryIcon(category)} />
+              {category}
+            </h2>
             <ul className="mt-2 divide-y divide-slate-100">
               {items.map((accommodation) => (
                 <AccommodationChoice
@@ -120,8 +135,7 @@ export default function Passport() {
             {saving ? 'Saving…' : 'Save passport'}
           </Button>
           <p className="text-sm text-slate-600">
-            {mustHaveCount} must-{mustHaveCount === 1 ? 'have' : 'haves'}, {niceCount} nice to
-            have
+            {mustHaveCount} must-{mustHaveCount === 1 ? 'have' : 'haves'}, {niceCount} nice to have
           </p>
           {status && <Alert kind={status.kind}>{status.message}</Alert>}
         </div>
@@ -130,6 +144,7 @@ export default function Passport() {
       {passport.accommodations.length > 0 && (
         <Link to="/clinics" className={buttonClass('secondary')}>
           Find clinics that fit my passport
+          <ArrowRight aria-hidden="true" className="ml-1.5 h-4 w-4" />
         </Link>
       )}
 
@@ -147,9 +162,14 @@ export default function Passport() {
 function AccommodationChoice({ accommodation, mustHave, onChange }) {
   const { id, label, description } = accommodation;
   const checked = mustHave !== null;
+  const Icon = accommodationIcon(id);
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3">
+    <li
+      className={`-mx-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-lg px-3 py-3 transition-colors ${
+        checked ? 'bg-teal-50/60' : ''
+      }`}
+    >
       <label className="flex min-w-0 flex-1 cursor-pointer gap-3">
         <input
           type="checkbox"
@@ -158,7 +178,13 @@ function AccommodationChoice({ accommodation, mustHave, onChange }) {
           className="mt-1 h-4 w-4 shrink-0 accent-teal-700"
         />
         <span>
-          <span className="font-medium">{label}</span>
+          <span className="flex items-center gap-2 font-medium">
+            <Icon
+              aria-hidden="true"
+              className={`h-4 w-4 ${checked ? 'text-teal-700' : 'text-slate-400'}`}
+            />
+            {label}
+          </span>
           <span className="block text-sm text-slate-600">{description}</span>
         </span>
       </label>
@@ -236,7 +262,10 @@ function ShareCard({ passport, onChange }) {
 
   return (
     <Card>
-      <h2 className="text-lg font-semibold">Share with clinic staff</h2>
+      <h2 className="flex items-center gap-3 text-lg font-semibold">
+        <IconTile icon={Share2} />
+        Share with clinic staff
+      </h2>
       <p className="mt-1 text-sm text-slate-600">
         A read-only link to your passport. It doesn't include the rest of your health profile,
         always shows your latest saved passport, and you can turn it off anytime.

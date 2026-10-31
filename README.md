@@ -72,6 +72,10 @@ endpoint with example responses, and how errors look.
 | GET    | `/health`                |       | Is the API (and its database) up?            |
 | POST   | `/api/v1/auth/register`  |       | Create an account (JSON: `email`, `password`)|
 | POST   | `/api/v1/auth/token`     |       | Log in (form: `username`, `password`) → token|
+| POST   | `/api/v1/auth/2fa/verify` |      | Second login step when 2FA is on (code)      |
+| POST   | `/api/v1/auth/2fa/setup` | ✓     | Start 2FA setup: QR code for an authenticator app |
+| POST   | `/api/v1/auth/2fa/enable` | ✓    | Turn 2FA on with a code → recovery codes     |
+| POST   | `/api/v1/auth/2fa/disable` | ✓   | Turn 2FA off (password + code)               |
 | GET    | `/api/v1/users/me`       | ✓     | The logged-in user                           |
 | GET    | `/api/v1/profile`        | ✓     | Your health profile                          |
 | PATCH  | `/api/v1/profile`        | ✓     | Update some or all profile fields            |

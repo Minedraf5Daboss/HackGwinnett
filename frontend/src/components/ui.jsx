@@ -4,6 +4,7 @@ const BUTTON_VARIANTS = {
   primary: 'bg-teal-700 text-white hover:bg-teal-800 focus-visible:outline-teal-700',
   secondary:
     'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50 focus-visible:outline-teal-700',
+  danger: 'bg-white text-red-700 ring-1 ring-red-300 hover:bg-red-50 focus-visible:outline-red-700',
   light: 'bg-white text-teal-800 hover:bg-teal-50 focus-visible:outline-white',
   outline: 'text-white ring-1 ring-white/70 hover:bg-white/10 focus-visible:outline-white',
 };
@@ -43,6 +44,32 @@ export function Field({ label, name, hint, multiline = false, className = '', ..
           {hint}
         </p>
       )}
+    </div>
+  );
+}
+
+/** An icon on a soft teal square. Decorative, so screen readers skip it. */
+export function IconTile({ icon: Icon, size = 'md', className = '' }) {
+  const sizes = size === 'lg' ? 'h-12 w-12 rounded-2xl' : 'h-10 w-10 rounded-xl';
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center bg-teal-50 text-teal-700 ring-1 ring-teal-600/15 ${sizes} ${className}`}
+    >
+      <Icon className={size === 'lg' ? 'h-6 w-6' : 'h-5 w-5'} />
+    </span>
+  );
+}
+
+/** A page's title, with an icon and a sentence or two about the page. */
+export function PageHeader({ icon, title, children }) {
+  return (
+    <div className="flex items-start gap-4">
+      <IconTile icon={icon} size="lg" />
+      <div>
+        <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
+        {children && <p className="mt-1 text-slate-600">{children}</p>}
+      </div>
     </div>
   );
 }

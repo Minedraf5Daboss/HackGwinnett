@@ -1,6 +1,8 @@
+import { HeartPulse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
-import { Alert, Button, Field } from '../components/ui.jsx';
+import TwoFactorCard from '../components/TwoFactorCard.jsx';
+import { Alert, Button, Field, PageHeader } from '../components/ui.jsx';
 
 // The form, section by section. To add a field: add a column to Profile in
 // backend/src/app/models.py and to ProfileUpdate in schemas.py, run
@@ -79,42 +81,43 @@ export default function Profile() {
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">My health profile</h1>
-        <p className="mt-1 text-slate-600">
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <PageHeader icon={HeartPulse} title="My health profile">
           Only you can see this. Leave anything blank that you'd rather not share.
-        </p>
-      </div>
+        </PageHeader>
 
-      {SECTIONS.map((section) => (
-        <section
-          key={section.title}
-          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
-        >
-          <h2 className="text-lg font-semibold">{section.title}</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {section.fields.map(({ name, ...field }) => (
-              <Field
-                key={name}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                max={field.type === 'date' ? today : undefined}
-                className={field.multiline ? 'sm:col-span-2' : ''}
-                {...field}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+        {SECTIONS.map((section) => (
+          <section
+            key={section.title}
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
+          >
+            <h2 className="text-lg font-semibold">{section.title}</h2>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {section.fields.map(({ name, ...field }) => (
+                <Field
+                  key={name}
+                  name={name}
+                  value={form[name]}
+                  onChange={handleChange}
+                  max={field.type === 'date' ? today : undefined}
+                  className={field.multiline ? 'sm:col-span-2' : ''}
+                  {...field}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
 
-      <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save profile'}
-        </Button>
-        {status && <Alert kind={status.kind}>{status.message}</Alert>}
-      </div>
-    </form>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button type="submit" disabled={saving}>
+            {saving ? 'Saving…' : 'Save profile'}
+          </Button>
+          {status && <Alert kind={status.kind}>{status.message}</Alert>}
+        </div>
+      </form>
+
+      <TwoFactorCard />
+    </div>
   );
 }

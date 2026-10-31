@@ -25,14 +25,40 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, [logout]);
 
-  const login = useCallback(async (email, password) => {
-    const { access_token } = await api('/auth/token', {
-      method: 'POST',
-      form: { username: email, password },
-    });
-    setToken(access_token);
+  const startSession = useCallback(async (accessToken) => {
+    setToken(accessToken);
     setUser(await api('/users/me'));
   }, []);
+
+  /** Log in. If the account has two-step verification on, returns `{ twoFactorToken }` for
+   * `verifyTwoFactor`, and the user isn't logged in until then. */
+  const login = useCallback(
+    async (email, password) => {
+      const result = await api('/auth/token', {
+        method: 'POST',
+        form: { username: email, password },
+      });
+      if (result.two_factor_required) return { twoFactorToken: result.two_factor_token };
+      await startSession(result.access_token);
+      return null;
+    },
+    [startSession],
+  );
+
+  /** The second step of logging in: a code from the authenticator app, or a recovery code. */
+  const verifyTwoFactor = useCallback(
+    async (twoFactorToken, code) => {
+      const { access_token } = await api('/auth/2fa/verify', {
+        method: 'POST',
+        body: { two_factor_token: twoFactorToken, code },
+      });
+      await startSession(access_token);
+    },
+    [startSession],
+  );
+
+  /** Reload the user, e.g. after turning two-step verification on or off. */
+  const refreshUser = useCallback(async () => setUser(await api('/users/me')), []);
 
   const register = useCallback(
     async (email, password) => {
@@ -43,8 +69,8 @@ export function AuthProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, register }),
-    [user, loading, login, logout, register],
+    () => ({ user, loading, login, verifyTwoFactor, refreshUser, logout, register }),
+    [user, loading, login, verifyTwoFactor, refreshUser, logout, register],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

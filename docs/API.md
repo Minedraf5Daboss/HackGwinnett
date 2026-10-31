@@ -46,6 +46,37 @@ const me = await fetch(`${API}/users/me`, {
 Tokens last 60 minutes. A `401` from a 🔒 endpoint means the token expired or is missing:
 send the user back to the login page.
 
+### Two-step verification (2FA)
+
+Users can turn on codes from an authenticator app (Google Authenticator, 1Password, ...).
+`GET /users/me` includes `two_factor_enabled`. In `frontend/`, `useAuth()` handles all of this.
+
+**Logging in with 2FA on:** `POST /auth/token` returns this instead of an access token:
+
+```json
+{ "two_factor_required": true, "two_factor_token": "eyJ..." }
+```
+
+Ask for the code, then **`POST /auth/2fa/verify`** with
+`{"two_factor_token": "...", "code": "123456"}`. It returns the usual
+`{"access_token": ...}`. The `code` can also be a recovery code like `"k3mz9-q7tpa"`.
+
+| Status | Meaning |
+|---|---|
+| `401` | Wrong code (each code works once), or `two_factor_token` expired after 5 minutes: log in again |
+| `429` | 5 wrong codes in a row: code checks are locked for 15 minutes |
+
+**Turning it on**, from a settings page:
+
+1. **🔒 `POST /auth/2fa/setup`** returns `secret`, `otpauth_uri`, and `qr_code`, an SVG data URI
+   for `<img src>`. Show the QR code, and the `secret` for typing in by hand.
+2. **🔒 `POST /auth/2fa/enable`** with `{"code": "123456"}` from the app. Returns
+   `{"recovery_codes": [...]}`: 10 one-time codes. **Show them once**; they can't be fetched
+   again. A wrong code returns `422`.
+
+**🔒 `POST /auth/2fa/disable`** with `{"password": "...", "code": "..."}` turns it off. A wrong
+password or code returns `403`, not `401`, so it doesn't look like the session ended.
+
 ## Accessibility Passport
 
 The accommodations a user needs at appointments. Accommodations are referred to by `id`,
