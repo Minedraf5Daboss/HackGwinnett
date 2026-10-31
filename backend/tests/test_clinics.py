@@ -74,3 +74,36 @@ def test_clinic_types(client):
     types = client.get("/api/v1/clinics/types").json()
     assert "Dental" in types
     assert types == sorted(types)
+
+
+def test_rank_by_needs(client):
+    needs = "wheelchair-access,hearing-loop"
+    clinics = client.get("/api/v1/clinics", params={"needs": needs}).json()
+    assert len(clinics) == 12
+    top = [c for c in clinics if c["match"]["score"] == 1.0]
+    assert {c["id"] for c in top} == {
+        "willow-womens-health",
+        "sunrise-community-clinic",
+        "bluebird-hearing-speech",
+    }
+    assert clinics[: len(top)] == top
+    assert clinics[-1]["match"] == {
+        "met": [],
+        "missing": ["wheelchair-access", "hearing-loop"],
+        "score": 0.0,
+    }
+
+
+def test_rank_by_needs_breaks_ties_by_distance(client):
+    # From Sugar Hill, Bluebird (in Sugar Hill) is the closest full match.
+    params = {"needs": "wheelchair-access,hearing-loop", "lat": 34.1065, "lng": -84.0335}
+    clinics = client.get("/api/v1/clinics", params=params).json()
+    assert [c["id"] for c in clinics[:3]] == [
+        "bluebird-hearing-speech",
+        "willow-womens-health",
+        "sunrise-community-clinic",
+    ]
+
+
+def test_rank_by_unknown_need(client):
+    assert client.get("/api/v1/clinics", params={"needs": "teleport"}).status_code == 422

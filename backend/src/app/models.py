@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Column, ForeignKey, String, Table, Text, func
+from sqlalchemy import Column, ForeignKey, String, Table, Text, func, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -117,6 +117,9 @@ class Passport(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    # Set while the user shares a read-only link. Clearing it turns the link off.
+    share_token: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+    share_include_name: Mapped[bool] = mapped_column(default=True, server_default=true())
 
     user: Mapped[User] = relationship(back_populates="passport")
     accommodations: Mapped[list[Accommodation]] = relationship(

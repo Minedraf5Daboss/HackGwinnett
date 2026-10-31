@@ -75,6 +75,14 @@ class ClinicAccommodationRead(BaseModel):
     note: str | None
 
 
+class ClinicMatch(BaseModel):
+    """How well a clinic meets a list of needs."""
+
+    met: list[str] = Field(description="Accommodation ids the clinic offers.")
+    missing: list[str] = Field(description="Accommodation ids the clinic doesn't offer.")
+    score: float = Field(description="Share of needs met, from 0 to 1.")
+
+
 class ClinicRead(BaseModel):
     id: str
     name: str
@@ -90,6 +98,9 @@ class ClinicRead(BaseModel):
     accommodations: list[ClinicAccommodationRead]
     distance_miles: float | None = Field(
         default=None, description="Only set when you search with `lat` and `lng`."
+    )
+    match: ClinicMatch | None = Field(
+        default=None, description="Only set when ranking against needs (see `needs`)."
     )
 
 
@@ -113,6 +124,29 @@ class PassportRead(BaseModel):
     accommodations: list[AccommodationRead]
     notes: str | None
     updated_at: datetime | None = Field(description="None until the passport is first saved.")
+    share_token: str | None = Field(
+        default=None, description="Set while a share link is on (see POST /passport/share)."
+    )
+
+
+class PassportShareCreate(BaseModel):
+    include_name: bool = Field(
+        default=True, description="Show the full name from your profile on the shared passport."
+    )
+
+
+class PassportShareRead(BaseModel):
+    token: str = Field(description="Put this in a link; see GET /shared-passports/{token}.")
+    include_name: bool
+
+
+class SharedPassportRead(BaseModel):
+    """The read-only passport anyone with the link can see."""
+
+    name: str | None
+    accommodations: list[AccommodationRead]
+    notes: str | None
+    updated_at: datetime
 
 
 class SimplifyRequest(BaseModel):

@@ -64,6 +64,9 @@ and the API docs are at `/app/docs`.
 
 ## API
 
+**Building the frontend? See [docs/API.md](docs/API.md)** for how logging in works, every
+endpoint with example responses, and how errors look.
+
 | Method | Path                     | Login | Description                                  |
 |--------|--------------------------|-------|----------------------------------------------|
 | GET    | `/health`                |       | Is the API (and its database) up?            |
@@ -74,20 +77,15 @@ and the API docs are at `/app/docs`.
 | PATCH  | `/api/v1/profile`        | ✓     | Update some or all profile fields            |
 | GET    | `/api/v1/passport`       | ✓     | Your Accessibility Passport                  |
 | PUT    | `/api/v1/passport`       | ✓     | Save it (JSON: `accommodations` ids, `notes`)|
+| GET    | `/api/v1/passport/matches` | ✓   | Clinics ranked by how well they fit your passport |
+| POST   | `/api/v1/passport/share` | ✓     | Turn on a read-only share link               |
+| DELETE | `/api/v1/passport/share` | ✓     | Turn the share link off                      |
+| GET    | `/api/v1/shared-passports/{token}` | | A shared passport (anyone with the link) |
 | GET    | `/api/v1/accommodations` |       | All accommodation types, with categories     |
-| GET    | `/api/v1/clinics`        |       | Search clinics (see below)                   |
+| GET    | `/api/v1/clinics`        |       | Search, filter, rank by needs, sort by distance |
 | GET    | `/api/v1/clinics/types`  |       | Clinic types, for a filter dropdown          |
 | GET    | `/api/v1/clinics/{id}`   |       | One clinic with its badges                   |
 | POST   | `/api/v1/simplify`       |       | Simplify medical text (JSON: `text`)         |
-
-`GET /api/v1/clinics` takes these optional query parameters:
-
-- `q`: search names, types, cities, ZIP codes, and badge names
-- `type`: one clinic type, e.g. `Dental`
-- `accommodations`: comma-separated ids, e.g. `wheelchair-access,asl-interpreter`. Only
-  clinics offering **all** of them are returned.
-- `lat` and `lng`: sort by distance from that point and fill in `distance_miles`. Each
-  clinic's `latitude` and `longitude` are ready for a map.
 
 ## Demo data
 

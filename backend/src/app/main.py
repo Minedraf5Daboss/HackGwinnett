@@ -38,11 +38,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = sessionmaker(engine, autoflush=False, expire_on_commit=False)
 
-    if settings.cors_origins:
+    # Let a website on another address call the API. In development, any localhost port is
+    # allowed, so a frontend run separately (e.g. on port 3000) works with no setup.
+    dev_origins = (
+        r"http://(localhost|127\.0\.0\.1)(:\d+)?" if settings.env == "development" else None
+    )
+    if settings.cors_origins or dev_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
-            allow_credentials=True,
+            allow_origin_regex=dev_origins,
             allow_methods=["*"],
             allow_headers=["*"],
         )
