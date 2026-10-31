@@ -7,14 +7,27 @@ import {
   Navigation,
   Phone,
   Search,
+  SearchX,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { accommodationIcon, byCategory, useAccommodations } from '../accommodations.js';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { Alert, Button, Card, Field, PageHeader, inputClass } from '../components/ui.jsx';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  IconTile,
+  LoadingCards,
+  PageHeader,
+  buttonClass,
+  checkClass,
+  inputClass,
+} from '../components/ui.jsx';
 
 export default function Clinics() {
   const { user, loading: authLoading } = useAuth();
@@ -29,6 +42,7 @@ export default function Clinics() {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [rankByPassport, setRankByPassport] = useState(true);
+  const [showMoreFilters, setShowMoreFilters] = useState(false); // on small screens
 
   const [clinics, setClinics] = useState(null);
   const [error, setError] = useState(null);
@@ -109,23 +123,49 @@ export default function Clinics() {
   }
 
   const hasMustHaves = myNeeds?.some((a) => a.must_have) ?? false;
+  const filtered = Boolean(q.trim() || type || required.length || position);
+
+  function clearFilters() {
+    setQ('');
+    setType('');
+    setRequired([]);
+    setPosition(null);
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader icon={Search} title="Find a clinic">
         Search clinics around Gwinnett County and see the accessibility support each one offers.
       </PageHeader>
 
-      <Card as="form" role="search" onSubmit={(e) => e.preventDefault()} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-[1fr_14rem]">
-          <Field
-            label="Search"
-            name="q"
-            type="search"
-            placeholder="Name, city, ZIP code, or support (e.g. ASL)"
-            value={q}
-            onChange={(event) => setQ(event.target.value)}
-          />
+      <div className="grid gap-8 lg:grid-cols-[19rem_1fr] lg:items-start">
+        <Card
+          as="form"
+          role="search"
+          aria-label="Filter clinics"
+          onSubmit={(e) => e.preventDefault()}
+          className="space-y-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+        >
+          <div>
+            <label htmlFor="q" className="block text-sm font-medium text-slate-700">
+              Search
+            </label>
+            <div className="relative mt-1.5">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                id="q"
+                type="search"
+                placeholder="Name, city, ZIP, or support"
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                className={`${inputClass} pl-10`}
+              />
+            </div>
+          </div>
+
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-slate-700">
               Clinic type
@@ -134,7 +174,7 @@ export default function Clinics() {
               id="type"
               value={type}
               onChange={(event) => setType(event.target.value)}
-              className={`mt-1 ${inputClass}`}
+              className={`mt-1.5 ${inputClass}`}
             >
               <option value="">All types</option>
               {types.map((t) => (
@@ -142,111 +182,178 @@ export default function Clinics() {
               ))}
             </select>
           </div>
-        </div>
 
-        {accommodations && (
-          <details className="rounded-lg border border-slate-200 px-4 py-3">
-            <summary className="cursor-pointer text-sm font-medium text-slate-700">
-              <SlidersHorizontal aria-hidden="true" className="mr-1.5 inline h-4 w-4" />
-              Only show clinics with…
-              {required.length > 0 && ` (${required.length} selected)`}
-            </summary>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2">
-              {byCategory(accommodations).map(([category, items]) => (
-                <fieldset key={category}>
-                  <legend className="text-sm font-semibold text-slate-500">{category}</legend>
-                  {items.map((a) => (
-                    <label key={a.id} className="mt-1 flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={required.includes(a.id)}
-                        onChange={(event) => toggleRequired(a.id, event.target.checked)}
-                        className="h-4 w-4 accent-teal-700"
-                      />
-                      {a.label}
-                    </label>
-                  ))}
-                </fieldset>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          {position ? (
-            <p>
-              Sorted by distance from you.{' '}
-              <button
+          <div className="space-y-3">
+            {position ? (
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-teal-50 px-3.5 py-2.5 text-sm text-teal-900">
+                <span className="flex items-center gap-2">
+                  <LocateFixed aria-hidden="true" className="h-4 w-4" />
+                  Sorted by distance from you.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPosition(null)}
+                  className="font-medium text-teal-700 hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+            ) : (
+              <Button
                 type="button"
-                onClick={() => setPosition(null)}
-                className="font-medium text-teal-700 hover:underline"
+                variant="secondary"
+                onClick={locate}
+                disabled={locating}
+                className="w-full"
               >
-                Clear
-              </button>
-            </p>
-          ) : (
-            <Button type="button" variant="secondary" onClick={locate} disabled={locating}>
-              <LocateFixed aria-hidden="true" className="mr-2 h-4 w-4" />
-              {locating ? 'Finding you…' : 'Use my location'}
+                <LocateFixed aria-hidden="true" />
+                {locating ? 'Finding you…' : 'Use my location'}
+              </Button>
+            )}
+            {locationError && <Alert>{locationError}</Alert>}
+
+            {user && myNeeds?.length > 0 && (
+              <label className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm font-medium">
+                Best fit for my passport first
+                <input
+                  type="checkbox"
+                  checked={rankByPassport}
+                  onChange={(event) => setRankByPassport(event.target.checked)}
+                  className={checkClass}
+                />
+              </label>
+            )}
+            {user && myNeeds?.length === 0 && (
+              <p className="text-sm text-slate-600">
+                Fill in{' '}
+                <Link to="/passport" className="font-medium text-teal-700 hover:underline">
+                  your passport
+                </Link>{' '}
+                to see the clinics that fit you best.
+              </p>
+            )}
+            {!authLoading && !user && (
+              <p className="text-sm text-slate-600">
+                <Link to="/login" className="font-medium text-teal-700 hover:underline">
+                  Log in
+                </Link>{' '}
+                to rank clinics by your Accessibility Passport.
+              </p>
+            )}
+          </div>
+
+          {accommodations && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowMoreFilters((show) => !show)}
+              aria-expanded={showMoreFilters}
+              aria-controls="accommodation-filters"
+              className="w-full lg:hidden"
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              {showMoreFilters ? 'Fewer filters' : 'More filters'}
+              {required.length > 0 && ` (${required.length})`}
             </Button>
           )}
-          {user && myNeeds?.length > 0 && (
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={rankByPassport}
-                onChange={(event) => setRankByPassport(event.target.checked)}
-                className="h-4 w-4 accent-teal-700"
-              />
-              Best fit for my passport first
-            </label>
-          )}
-          {user && myNeeds?.length === 0 && (
-            <p className="text-slate-600">
-              Fill in{' '}
-              <Link to="/passport" className="font-medium text-teal-700 hover:underline">
-                your passport
-              </Link>{' '}
-              to see the clinics that fit you best.
-            </p>
-          )}
-          {!authLoading && !user && (
-            <p className="text-slate-600">
-              <Link to="/login" className="font-medium text-teal-700 hover:underline">
-                Log in
-              </Link>{' '}
-              to see the clinics that fit your Accessibility Passport best.
-            </p>
-          )}
-        </div>
-        {locationError && <Alert>{locationError}</Alert>}
-      </Card>
 
-      {error && <Alert>{error}</Alert>}
-      {clinics === null ? (
-        !error && <p className="text-slate-500">Loading clinics…</p>
-      ) : (
-        <section aria-label="Results" className="space-y-4">
-          <p aria-live="polite" className="text-sm text-slate-600">
-            {clinics.length} {clinics.length === 1 ? 'clinic' : 'clinics'}
-            {ranked && ', best fit first'}
-          </p>
-          {clinics.length === 0 ? (
-            <Card>
-              <p className="text-slate-600">No clinics match. Try removing a filter.</p>
-            </Card>
+          {accommodations && (
+            <fieldset
+              id="accommodation-filters"
+              className={showMoreFilters ? '' : 'hidden lg:block'}
+            >
+              <legend className="text-sm font-medium text-slate-700">Only show clinics with</legend>
+              <div className="mt-3 space-y-4">
+                {byCategory(accommodations).map(([category, items]) => (
+                  <div key={category}>
+                    <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                      {category}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {items.map((a) => (
+                        <FilterChip
+                          key={a.id}
+                          accommodation={a}
+                          checked={required.includes(a.id)}
+                          onChange={(checked) => toggleRequired(a.id, checked)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {filtered && (
+            <Button type="button" variant="ghost" onClick={clearFilters} className="w-full">
+              <X aria-hidden="true" />
+              Clear filters
+            </Button>
+          )}
+        </Card>
+
+        <section aria-label="Results" className="min-w-0 space-y-4">
+          {error && <Alert>{error}</Alert>}
+          {clinics === null ? (
+            !error && <LoadingCards count={3} label="Loading clinics…" className="h-48" />
           ) : (
-            <ul className="space-y-4">
-              {clinics.map((clinic) => (
-                <li key={clinic.id}>
-                  <ClinicCard clinic={clinic} labels={labels} hasMustHaves={hasMustHaves} />
-                </li>
-              ))}
-            </ul>
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p aria-live="polite" className="text-sm font-medium text-slate-600">
+                  {clinics.length} {clinics.length === 1 ? 'clinic' : 'clinics'}
+                  {ranked && ', best fit first'}
+                </p>
+                {ranked && <Badge tone="teal">Ranked by your passport</Badge>}
+              </div>
+              {clinics.length === 0 ? (
+                <Card className="flex flex-col items-center py-12 text-center">
+                  <IconTile icon={SearchX} size="lg" />
+                  <h2 className="mt-4 font-semibold">No clinics match</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Try a different search or fewer filters.
+                  </p>
+                  <Button type="button" variant="secondary" onClick={clearFilters} className="mt-5">
+                    Clear filters
+                  </Button>
+                </Card>
+              ) : (
+                <ul className="space-y-4">
+                  {clinics.map((clinic) => (
+                    <li key={clinic.id}>
+                      <ClinicCard clinic={clinic} labels={labels} hasMustHaves={hasMustHaves} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </section>
-      )}
+      </div>
     </div>
+  );
+}
+
+/** An accommodation to filter by, as a toggle chip. */
+function FilterChip({ accommodation, checked, onChange }) {
+  const Icon = accommodationIcon(accommodation.id);
+  return (
+    <label
+      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-teal-700 ${
+        checked
+          ? 'bg-teal-700 text-white ring-teal-700'
+          : 'bg-white text-slate-700 ring-slate-200 hover:ring-slate-300'
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="sr-only"
+      />
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+      {accommodation.label}
+    </label>
   );
 }
 
@@ -256,17 +363,20 @@ function ClinicCard({ clinic, labels, hasMustHaves }) {
   const address = `${clinic.street}, ${clinic.city}, ${clinic.state} ${clinic.zip}`;
 
   return (
-    <Card as="article">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{clinic.name}</h2>
-          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-              {clinic.type}
+    <Card as="article" className="transition hover:border-slate-300 hover:shadow-md">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight">{clinic.name}</h2>
+            <Badge>{clinic.type}</Badge>
+          </div>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
+              {address}
             </span>
-            {clinic.city}
             {clinic.distance_miles !== null && (
-              <span className="inline-flex items-center gap-1 text-teal-800">
+              <span className="inline-flex items-center gap-1 font-medium text-teal-800">
                 <Navigation aria-hidden="true" className="h-3.5 w-3.5" />
                 {clinic.distance_miles} mi away
               </span>
@@ -276,58 +386,48 @@ function ClinicCard({ clinic, labels, hasMustHaves }) {
         {match && <MatchSummary match={match} labels={labels} hasMustHaves={hasMustHaves} />}
       </div>
 
-      <div className="mt-4 space-y-1.5 text-sm text-slate-700">
-        <p className="flex items-start gap-2">
-          <MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-          <span>
-            {address} ·{' '}
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-teal-700 hover:underline"
-            >
-              Directions
-            </a>
-          </span>
-        </p>
-        <p className="flex items-center gap-2">
-          <Phone aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />
-          <a
-            href={`tel:${clinic.phone.replace(/[^\d+]/g, '')}`}
-            className="font-medium text-teal-700 hover:underline"
-          >
-            {clinic.phone}
-          </a>
-          {clinic.hours && (
-            <>
-              <Clock aria-hidden="true" className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
-              {clinic.hours}
-            </>
-          )}
-        </p>
-      </div>
-
-      <ul aria-label="Accessibility support" className="mt-4 flex flex-wrap gap-2">
+      <ul aria-label="Accessibility support" className="mt-4 flex flex-wrap gap-1.5">
         {clinic.accommodations.map((a) => {
           const Icon = accommodationIcon(a.id);
           return (
             <li
               key={a.id}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
                 met.has(a.id)
-                  ? 'bg-teal-50 text-teal-900 ring-1 ring-teal-600/40'
+                  ? 'bg-teal-50 text-teal-900 ring-1 ring-teal-600/30'
                   : 'bg-slate-100 text-slate-700'
               }`}
             >
               <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
               {met.has(a.id) && <span className="sr-only">In your passport: </span>}
               {a.label}
-              {a.note && <span className="text-slate-500"> · {a.note}</span>}
+              {a.note && <span className="font-normal text-slate-500"> · {a.note}</span>}
             </li>
           );
         })}
       </ul>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+        <a href={`tel:${clinic.phone.replace(/[^\d+]/g, '')}`} className={buttonClass('secondary')}>
+          <Phone aria-hidden="true" />
+          {clinic.phone}
+        </a>
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonClass('secondary')}
+        >
+          <Navigation aria-hidden="true" />
+          Directions
+        </a>
+        {clinic.hours && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-slate-500 sm:ml-auto">
+            <Clock aria-hidden="true" className="h-4 w-4" />
+            {clinic.hours}
+          </span>
+        )}
+      </div>
     </Card>
   );
 }

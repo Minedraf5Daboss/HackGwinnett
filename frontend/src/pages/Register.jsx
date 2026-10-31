@@ -9,6 +9,7 @@ export default function Register() {
   return (
     <AuthForm
       title="Create your account"
+      subtitle="It takes a minute. You can fill in the rest later."
       submitLabel="Sign up"
       passwordProps={{ autoComplete: 'new-password', minLength: 8, hint: 'At least 8 characters.' }}
       onSubmit={async (email, password) => {

@@ -1,8 +1,12 @@
+@import '@fontsource-variable/inter';
 @import 'tailwindcss';
 
 @theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
   /* Use as `motion-safe:animate-fade-up`, so it's skipped for people who turn off motion. */
   --animate-fade-up: fade-up 0.35s ease-out both;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
 
   @keyframes fade-up {
     from {
@@ -13,5 +17,25 @@
       opacity: 1;
       transform: none;
     }
+  }
+
+  @keyframes shimmer {
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+@layer base {
+  body {
+    /* A soft teal wash at the top of every page. */
+    background:
+      radial-gradient(60rem 30rem at 50% -10rem, rgb(204 251 241 / 0.55), transparent),
+      var(--color-slate-50);
+    font-feature-settings: 'cv11', 'ss01'; /* Inter's straighter "a" and "1" */
+  }
+
+  ::selection {
+    background: var(--color-teal-100);
   }
 }

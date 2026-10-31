@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../auth.jsx';
 import AuthForm from '../components/AuthForm.jsx';
+import AuthShell from '../components/AuthShell.jsx';
 import { Alert, Button, Field, IconTile } from '../components/ui.jsx';
 
 export default function Login() {
@@ -27,7 +28,8 @@ export default function Login() {
 
   return (
     <AuthForm
-      title="Log in"
+      title="Welcome back"
+      subtitle="Log in to your passport and health profile."
       submitLabel="Log in"
       passwordProps={{ autoComplete: 'current-password' }}
       onSubmit={async (email, password) => {
@@ -68,13 +70,13 @@ function CodeStep({ onSubmit, onStartOver }) {
   }
 
   return (
-    <div className="mx-auto max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <AuthShell>
       <IconTile icon={ShieldCheck} size="lg" />
-      <h1 className="mt-4 text-2xl font-bold">Enter your code</h1>
+      <h1 className="mt-5 text-2xl font-semibold tracking-tight">Enter your code</h1>
       <p className="mt-1 text-sm text-slate-600">
         Open your authenticator app and enter the 6-digit code for MedAssist.
       </p>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Field
           label="Code"
           name="code"
@@ -94,7 +96,7 @@ function CodeStep({ onSubmit, onStartOver }) {
           {submitting ? 'Checking…' : 'Verify and log in'}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-8 text-center text-sm text-slate-600">
         <button
           type="button"
           onClick={onStartOver}
@@ -103,6 +105,6 @@ function CodeStep({ onSubmit, onStartOver }) {
           Start over
         </button>
       </p>
-    </div>
+    </AuthShell>
   );
 }

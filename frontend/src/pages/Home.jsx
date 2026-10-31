@@ -79,13 +79,13 @@ export default function Home() {
               {user ? (
                 <Link to="/passport" className={buttonClass('light')}>
                   Go to my passport
-                  <ArrowRight aria-hidden="true" className="ml-1.5 h-4 w-4" />
+                  <ArrowRight aria-hidden="true" />
                 </Link>
               ) : (
                 <>
                   <Link to="/register" className={buttonClass('light')}>
                     Get started
-                    <ArrowRight aria-hidden="true" className="ml-1.5 h-4 w-4" />
+                    <ArrowRight aria-hidden="true" />
                   </Link>
                   <Link to="/clinics" className={buttonClass('outline')}>
                     Find a clinic

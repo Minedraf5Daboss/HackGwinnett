@@ -1,8 +1,16 @@
 import { useState } from 'react';
+import AuthShell from './AuthShell.jsx';
 import { Alert, Button, Field } from './ui.jsx';
 
-/** The email + password card shared by the login and sign-up pages. */
-export default function AuthForm({ title, submitLabel, onSubmit, passwordProps, footer }) {
+/** The email + password form shared by the login and sign-up pages. */
+export default function AuthForm({
+  title,
+  subtitle,
+  submitLabel,
+  onSubmit,
+  passwordProps,
+  footer,
+}) {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -21,9 +29,10 @@ export default function AuthForm({ title, submitLabel, onSubmit, passwordProps, 
   }
 
   return (
-    <div className="mx-auto max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-bold">{title}</h1>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+    <AuthShell>
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      {subtitle && <p className="mt-1 text-slate-600">{subtitle}</p>}
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Field label="Email" name="email" type="email" autoComplete="email" required />
         <Field label="Password" name="password" type="password" required {...passwordProps} />
         {error && <Alert>{error}</Alert>}
@@ -31,7 +40,7 @@ export default function AuthForm({ title, submitLabel, onSubmit, passwordProps, 
           {submitting ? 'Please wait…' : submitLabel}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-600">{footer}</p>
-    </div>
+      <p className="mt-8 text-center text-sm text-slate-600">{footer}</p>
+    </AuthShell>
   );
 }

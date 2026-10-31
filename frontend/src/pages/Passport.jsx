@@ -1,4 +1,4 @@
-import { ArrowRight, IdCard, Share2 } from 'lucide-react';
+import { ArrowRight, Copy, ExternalLink, IdCard, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
@@ -10,12 +10,15 @@ import {
 import { api } from '../api.js';
 import {
   Alert,
+  Badge,
   Button,
   Card,
   Field,
   IconTile,
+  LoadingCards,
   PageHeader,
   buttonClass,
+  checkClass,
   inputClass,
 } from '../components/ui.jsx';
 
@@ -23,6 +26,9 @@ import {
 function shareUrl(token) {
   return `${window.location.origin}${import.meta.env.BASE_URL}shared/${token}`;
 }
+
+const sameChoices = (a, b) =>
+  Object.keys(a).length === Object.keys(b).length && Object.keys(a).every((id) => a[id] === b[id]);
 
 export default function Passport() {
   const { accommodations, error: loadError } = useAccommodations();
@@ -34,7 +40,7 @@ export default function Passport() {
 
   function showSaved(saved) {
     setPassport(saved);
-    setChosen(Object.fromEntries(saved.accommodations.map((a) => [a.id, a.must_have])));
+    setChosen(savedChoices(saved));
     setNotes(saved.notes ?? '');
   }
 
@@ -80,116 +86,168 @@ export default function Passport() {
     return status ? (
       <Alert>{status.message}</Alert>
     ) : (
-      <p className="text-slate-500">Loading your passport…</p>
+      <LoadingCards label="Loading your passport…" />
     );
   }
 
-  const mustHaveCount = Object.values(chosen).filter(Boolean).length;
-  const niceCount = Object.keys(chosen).length - mustHaveCount;
+  const labels = Object.fromEntries(accommodations.map((a) => [a.id, a.label]));
+  const mustHaves = Object.keys(chosen).filter((id) => chosen[id]);
+  const niceToHaves = Object.keys(chosen).filter((id) => !chosen[id]);
+  const unsaved = !sameChoices(chosen, savedChoices(passport)) || notes !== (passport.notes ?? '');
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <PageHeader icon={IdCard} title="My Accessibility Passport">
-          Choose the support you need at appointments. Mark the ones you can't do without as{' '}
-          <strong className="font-semibold">must-haves</strong>. We use your passport to find
-          clinics that fit, and you can share it with clinic staff.
-        </PageHeader>
+    <div className="space-y-8">
+      <PageHeader icon={IdCard} title="My Accessibility Passport">
+        Choose the support you need at appointments, and mark the ones you can't do without as{' '}
+        <strong className="font-semibold text-slate-900">must-haves</strong>. We use it to find
+        clinics that fit, and you can share it with clinic staff.
+      </PageHeader>
 
-        {byCategory(accommodations).map(([category, items]) => (
-          <Card key={category}>
-            <h2 className="flex items-center gap-3 text-lg font-semibold">
-              <IconTile icon={categoryIcon(category)} />
-              {category}
-            </h2>
-            <ul className="mt-2 divide-y divide-slate-100">
-              {items.map((accommodation) => (
-                <AccommodationChoice
-                  key={accommodation.id}
-                  accommodation={accommodation}
-                  mustHave={chosen[accommodation.id] ?? null}
-                  onChange={(mustHave) => choose(accommodation.id, mustHave)}
-                />
-              ))}
-            </ul>
+      <div className="grid gap-8 lg:grid-cols-[1fr_21rem] lg:items-start">
+        <form id="passport-form" onSubmit={handleSubmit} className="space-y-8">
+          {byCategory(accommodations).map(([category, items]) => {
+            const Icon = categoryIcon(category);
+            return (
+              <section key={category}>
+                <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+                  <Icon aria-hidden="true" className="h-4 w-4 text-teal-700" />
+                  {category}
+                </h2>
+                <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {items.map((accommodation) => (
+                    <AccommodationTile
+                      key={accommodation.id}
+                      accommodation={accommodation}
+                      mustHave={chosen[accommodation.id] ?? null}
+                      onChange={(mustHave) => choose(accommodation.id, mustHave)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+
+          <Card>
+            <Field
+              label="Notes for clinic staff"
+              name="notes"
+              multiline
+              maxLength={2000}
+              value={notes}
+              onChange={(event) => {
+                setNotes(event.target.value);
+                setStatus(null);
+              }}
+              hint='Anything else that helps, e.g. "Please text instead of calling."'
+            />
           </Card>
-        ))}
+        </form>
 
-        <Card>
-          <Field
-            label="Notes for clinic staff"
-            name="notes"
-            multiline
-            maxLength={2000}
-            value={notes}
-            onChange={(event) => {
-              setNotes(event.target.value);
-              setStatus(null);
-            }}
-            hint='Anything else that helps, e.g. "Please text instead of calling."'
-          />
-        </Card>
+        <aside className="space-y-4 lg:sticky lg:top-24">
+          <Card>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-semibold">Your passport</h2>
+              {unsaved && <Badge tone="amber">Unsaved changes</Badge>}
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3">
+              <Stat label="Must-haves" value={mustHaves.length} accent />
+              <Stat label="Nice to have" value={niceToHaves.length} />
+            </dl>
+            <p aria-live="polite" className="sr-only">
+              {mustHaves.length} must-{mustHaves.length === 1 ? 'have' : 'haves'},{' '}
+              {niceToHaves.length} nice to have
+            </p>
+            {mustHaves.length + niceToHaves.length > 0 ? (
+              <ul className="mt-4 flex flex-wrap gap-1.5">
+                {[...mustHaves, ...niceToHaves].map((id) => (
+                  <li key={id}>
+                    <Badge tone={chosen[id] ? 'solid' : 'slate'}>{labels[id]}</Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-slate-500">
+                Pick the support you need to get started.
+              </p>
+            )}
 
-        <div className="flex flex-wrap items-center gap-4">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Save passport'}
-          </Button>
-          <p className="text-sm text-slate-600">
-            {mustHaveCount} must-{mustHaveCount === 1 ? 'have' : 'haves'}, {niceCount} nice to have
-          </p>
-          {status && <Alert kind={status.kind}>{status.message}</Alert>}
-        </div>
-      </form>
+            <div className="mt-5 space-y-3">
+              <Button type="submit" form="passport-form" disabled={saving} className="w-full">
+                {saving ? 'Saving…' : 'Save passport'}
+              </Button>
+              {status && <Alert kind={status.kind}>{status.message}</Alert>}
+              {passport.accommodations.length > 0 && (
+                <Link to="/clinics" className={`${buttonClass('secondary')} w-full`}>
+                  Find clinics that fit
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              )}
+            </div>
+          </Card>
 
-      {passport.accommodations.length > 0 && (
-        <Link to="/clinics" className={buttonClass('secondary')}>
-          Find clinics that fit my passport
-          <ArrowRight aria-hidden="true" className="ml-1.5 h-4 w-4" />
-        </Link>
-      )}
-
-      {passport.updated_at && (
-        <ShareCard
-          passport={passport}
-          onChange={(changes) => setPassport((current) => ({ ...current, ...changes }))}
-        />
-      )}
+          {passport.updated_at && (
+            <ShareCard
+              passport={passport}
+              onChange={(changes) => setPassport((current) => ({ ...current, ...changes }))}
+            />
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
 
-/** One accommodation: a checkbox, then must-have or nice-to-have once it's checked. */
-function AccommodationChoice({ accommodation, mustHave, onChange }) {
+function savedChoices(passport) {
+  return Object.fromEntries(passport.accommodations.map((a) => [a.id, a.must_have]));
+}
+
+function Stat({ label, value, accent = false }) {
+  return (
+    <div className={`rounded-xl p-3 ${accent ? 'bg-teal-50' : 'bg-slate-50'}`}>
+      <dt className="text-xs font-medium text-slate-500">{label}</dt>
+      <dd
+        className={`mt-0.5 text-2xl font-semibold ${accent ? 'text-teal-800' : 'text-slate-800'}`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+/** One accommodation: a tile to tick, then must-have or nice-to-have once it's ticked. */
+function AccommodationTile({ accommodation, mustHave, onChange }) {
   const { id, label, description } = accommodation;
   const checked = mustHave !== null;
   const Icon = accommodationIcon(id);
 
   return (
     <li
-      className={`-mx-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-lg px-3 py-3 transition-colors ${
-        checked ? 'bg-teal-50/60' : ''
+      className={`rounded-2xl border p-4 transition has-[input[type=checkbox]:focus-visible]:outline-2 has-[input[type=checkbox]:focus-visible]:outline-offset-2 has-[input[type=checkbox]:focus-visible]:outline-teal-700 ${
+        checked
+          ? 'border-teal-600/40 bg-teal-50/60 shadow-sm shadow-teal-900/5'
+          : 'border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm'
       }`}
     >
-      <label className="flex min-w-0 flex-1 cursor-pointer gap-3">
+      <label className="flex cursor-pointer gap-3">
         <input
           type="checkbox"
           checked={checked}
           onChange={(event) => onChange(event.target.checked ? true : null)}
-          className="mt-1 h-4 w-4 shrink-0 accent-teal-700"
+          className={`${checkClass} mt-1`}
         />
-        <span>
+        <span className="min-w-0">
           <span className="flex items-center gap-2 font-medium">
             <Icon
               aria-hidden="true"
-              className={`h-4 w-4 ${checked ? 'text-teal-700' : 'text-slate-400'}`}
+              className={`h-4 w-4 shrink-0 ${checked ? 'text-teal-700' : 'text-slate-400'}`}
             />
             {label}
           </span>
-          <span className="block text-sm text-slate-600">{description}</span>
+          <span className="mt-0.5 block text-sm text-slate-600">{description}</span>
         </span>
       </label>
       {checked && (
-        <fieldset className="flex shrink-0 overflow-hidden rounded-lg text-sm ring-1 ring-slate-300">
+        <fieldset className="mt-3 ml-7 inline-flex rounded-lg bg-white p-0.5 ring-1 ring-slate-200">
           <legend className="sr-only">How important is {label}?</legend>
           {[
             [true, 'Must-have'],
@@ -197,10 +255,10 @@ function AccommodationChoice({ accommodation, mustHave, onChange }) {
           ].map(([value, text]) => (
             <label
               key={text}
-              className={`cursor-pointer px-3 py-1.5 font-medium has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-4 has-[:focus-visible]:outline-current ${
+              className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-teal-700 ${
                 mustHave === value
-                  ? 'bg-teal-700 text-white'
-                  : 'bg-white text-slate-700 hover:bg-slate-50'
+                  ? 'bg-teal-700 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <input
@@ -262,14 +320,18 @@ function ShareCard({ passport, onChange }) {
 
   return (
     <Card>
-      <h2 className="flex items-center gap-3 text-lg font-semibold">
+      <div className="flex items-start gap-3">
         <IconTile icon={Share2} />
-        Share with clinic staff
-      </h2>
-      <p className="mt-1 text-sm text-slate-600">
-        A read-only link to your passport. It doesn't include the rest of your health profile,
-        always shows your latest saved passport, and you can turn it off anytime.
-      </p>
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold">
+            Share with clinic staff
+            {token && <Badge tone="emerald">On</Badge>}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            A read-only link to your latest saved passport. Your health profile isn't included.
+          </p>
+        </div>
+      </div>
 
       <label className="mt-4 flex items-center gap-2 text-sm">
         <input
@@ -280,7 +342,7 @@ function ShareCard({ passport, onChange }) {
             setIncludeName(event.target.checked);
             if (token) share(event.target.checked);
           }}
-          className="h-4 w-4 accent-teal-700"
+          className={checkClass}
         />
         <span>
           Show my name (from{' '}
@@ -293,34 +355,46 @@ function ShareCard({ passport, onChange }) {
 
       {token ? (
         <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             <input
               readOnly
               value={shareUrl(token)}
               aria-label="Share link"
               onFocus={(event) => event.target.select()}
-              className={`${inputClass} min-w-0 flex-1 font-mono text-sm`}
+              className={`${inputClass} min-w-0 flex-1 font-mono text-xs`}
             />
-            <Button type="button" variant="secondary" onClick={copy}>
-              Copy link
+            <Button type="button" variant="secondary" onClick={copy} aria-label="Copy link">
+              <Copy aria-hidden="true" />
             </Button>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-2">
             <a
               href={shareUrl(token)}
               target="_blank"
               rel="noreferrer"
-              className={buttonClass('secondary')}
+              className={`${buttonClass('secondary')} flex-1`}
             >
+              <ExternalLink aria-hidden="true" />
               Preview
             </a>
-            <Button type="button" variant="secondary" onClick={stopSharing} disabled={busy}>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={stopSharing}
+              disabled={busy}
+              className="flex-1"
+            >
               Stop sharing
             </Button>
           </div>
         </div>
       ) : (
-        <Button type="button" className="mt-4" onClick={() => share(includeName)} disabled={busy}>
+        <Button
+          type="button"
+          className="mt-4 w-full"
+          onClick={() => share(includeName)}
+          disabled={busy}
+        >
           Create share link
         </Button>
       )}

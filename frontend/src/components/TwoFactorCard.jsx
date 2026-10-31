@@ -86,7 +86,7 @@ export default function TwoFactorCard() {
               run(async () => setSetup(await api('/auth/2fa/setup', { method: 'POST' })))
             }
           >
-            <Smartphone aria-hidden="true" className="mr-2 h-4 w-4" />
+            <Smartphone aria-hidden="true" />
             Set up two-step verification
           </Button>
         )}
@@ -198,11 +198,11 @@ function RecoveryCodes({ codes, onDone }) {
             setCopied(true);
           }}
         >
-          <Copy aria-hidden="true" className="mr-2 h-4 w-4" />
+          <Copy aria-hidden="true" />
           {copied ? 'Copied' : 'Copy'}
         </Button>
         <Button type="button" variant="secondary" onClick={download}>
-          <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+          <Download aria-hidden="true" />
           Download
         </Button>
         <Button type="button" onClick={onDone}>
