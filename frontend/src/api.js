@@ -42,7 +42,8 @@ export async function api(path, { method = 'GET', body, form } = {}) {
     payload = JSON.stringify(body);
   }
 
-  const res = await fetch(`/api/v1${path}`, { method, headers, body: payload });
+  const url = `${import.meta.env.BASE_URL}api/v1${path}`;
+  const res = await fetch(url, { method, headers, body: payload });
   if (res.status === 401 && token) handleUnauthorized();
   if (res.status === 204) return null;
 

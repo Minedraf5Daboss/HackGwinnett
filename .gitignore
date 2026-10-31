@@ -14,6 +14,7 @@ dist/
 
 # Local settings and data (never commit these)
 .env
+.env.local
 *.db
 *.db-journal
 

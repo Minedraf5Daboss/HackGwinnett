@@ -13,6 +13,7 @@ def main() -> None:
         port=settings.port,
         log_level=settings.log_level,
         reload=settings.env == "development",
+        root_path=settings.root_path,
     )
 
 

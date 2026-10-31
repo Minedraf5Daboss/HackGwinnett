@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "info"
     cors_origins: list[str] = []
+    # Set when a proxy serves the API under a sub-path (e.g. "/app"), so the /docs page
+    # links to the right URLs.
+    root_path: str = ""
 
     database_url: str = "sqlite:///./app.db"
 

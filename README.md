@@ -36,6 +36,21 @@ Then open **http://localhost:5173**. The website forwards `/api` requests to the
   email as the username to try the protected endpoints.
 - In VS Code, press **F5** → "API server" to run the API with the debugger.
 
+### In the workshop's browser editor
+
+The workshop editor only shows apps on port 8081, at `https://<your-editor>.cloudfront.net/app/`.
+To use it, create `frontend/.env.local` with:
+
+```
+BASE_PATH=/app/
+PORT=8081
+ALLOWED_HOSTS=.cloudfront.net
+HMR_CLIENT_PORT=443
+```
+
+and add `APP_ROOT_PATH=/app` to `backend/.env`. Then run `make dev`. The site is at `/app/`
+and the API docs are at `/app/docs`.
+
 ## Commands
 
 | Command                       | What it does                                         |
